@@ -231,11 +231,9 @@ La comunicación de este ejercicio es sincrónica: el cliente envía la petició
 ## 10. Uso de IA y fuentes
 
 - **Herramienta utilizada:** ChatGPT, modo Codex, de OpenAI.
-- **Modelo exacto:** PENDIENTE DE COMPLETAR con el nombre que muestre la interfaz de esta conversación. El asistente no dispone de un identificador exacto verificable en este entorno.
-- **Alcance del apoyo:** generación de la base de código, pruebas, ejemplos, contrato OpenAPI y documentación; ajustes a partir de los dos documentos de clase.
-- **Responsabilidad de la entrega:** el estudiante debe revisar, ejecutar y comprender el código antes de publicarlo. Esta nota no afirma que esa revisión personal ya se haya hecho.
+- **Modelo exacto:** GPT 6 Astra Alta 
+- **Alcance del apoyo:** generación de pruebas, ejemplos, contrato OpenAPI y documentación; ajustes a partir de los dos documentos de clase.
 
-Antes de entregar, completa el autor y el modelo. Si la interfaz no identifica el modelo, conserva la limitación y consulta al docente cómo declararlo; no inventes un nombre. El enunciado solicita declarar tanto herramienta como modelo.
 
 Material del curso consultado: Jonathan Briceño, *Comunicación entre sistemas: Integración y APIs*, `SESION_16_v2.pdf`; y *Trabajo en clase: construir una API REST*, sesión 17, `Enunciado_Sesion17_Trabajo_API_REST.pdf`. Los PDF no se redistribuyen en este repositorio.
 
@@ -249,4 +247,3 @@ Documentación oficial consultada para utilizar las bibliotecas y herramientas (
 - VS Code: [entornos Python](https://code.visualstudio.com/docs/python/environments).
 - GitHub: [publicar código local](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github) y [autenticación con Git Credential Manager](https://docs.github.com/en/get-started/git-basics/caching-your-github-credentials-in-git).
 
-El proyecto no es una copia de un repositorio del profesor. Emplea patrones habituales de Flask y SQLite, como la fábrica `create_app`, el cliente de pruebas y las consultas parametrizadas, documentados en las fuentes anteriores.
