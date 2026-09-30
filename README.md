@@ -230,7 +230,7 @@ La comunicación de este ejercicio es sincrónica: el cliente envía la petició
 
 - **Herramienta utilizada:** ChatGPT, modo Codex, de OpenAI.
 - **Modelo exacto:** GPT 6 Astra Alta 
-- **Alcance del apoyo:** generación de pruebas, ejemplos, contrato OpenAPI y documentación; ajustes a partir de los dos documentos de clase.
+- **Alcance del apoyo:** generación de la base de código de la API, pruebas, ejemplos, contrato OpenAPI y documentación; ajustes a partir de los dos documentos de clase.
 
 
 Material del curso consultado: Jonathan Briceño, *Comunicación entre sistemas: Integración y APIs*, `SESION_16_v2.pdf`; y *Trabajo en clase: construir una API REST*, sesión 17, `Enunciado_Sesion17_Trabajo_API_REST.pdf`. Los PDF no se redistribuyen en este repositorio.
