@@ -221,18 +221,8 @@ El tiempo varía. Las pruebas emplean bases temporales y no alteran los datos ma
 
 Para comprenderlas, abre `tests/test_api.py`. Cada función cuyo nombre empieza por `test_` comprueba un comportamiento. `assertEqual` compara el resultado obtenido con el esperado. Si aparece `FAILED`, lee el nombre de la prueba y el error antes de entregar.
 
-## Paso 8. Completar los datos de autoría y estudiar el código
 
-1. Abre `README.md`.
-2. Sustituye `COMPLETAR con tu nombre antes de entregar` por tu nombre.
-3. En **Uso de IA y fuentes**, registra el modelo exacto que puedas verificar en la interfaz de esta conversación. La herramienta ya está declarada como ChatGPT, modo Codex.
-4. Si la interfaz no muestra el modelo, no adivines: conserva la limitación indicada y consulta al profesor cómo reportarla.
-5. Lee `EXPLICACION_Y_SESION_16.md` y revisa en `app.py` cada función que se menciona.
-6. Guarda con `Ctrl+S`.
-
-El enunciado permite IA, pero exige declarar herramienta y modelo y comprender el código. La generación del proyecto no sustituye tu revisión personal.
-
-## Paso 9. Crear el repositorio público en GitHub
+## Paso 8. Crear el repositorio público en GitHub
 
 1. Inicia sesión en [GitHub](https://github.com/).
 2. Selecciona **New repository** desde el menú para crear repositorios.
@@ -245,7 +235,7 @@ El enunciado permite IA, pero exige declarar herramienta y modelo y comprender e
 
 La API seguirá ejecutándose en tu computador. GitHub almacena el código; no la pone a funcionar como un servicio público. El taller pide el enlace al repositorio, no un despliegue ni GitHub Pages.
 
-## Paso 10. Subir el proyecto con Git desde VS Code
+## Paso 9. Subir el proyecto con Git desde VS Code
 
 En la terminal del proyecto ejecuta:
 
@@ -305,7 +295,7 @@ Cuando termine, recarga la página del repositorio. Debes ver los archivos extra
 
 **Guardar el archivo, hacer commit y hacer push son acciones diferentes.** El commit no sube por sí solo los cambios a GitHub.
 
-## Paso 11. Verificar como lo haría el profesor
+## Paso 10. Verificar que quedó bien subido a github
 
 1. Abre la URL del repositorio en una ventana privada del navegador, sin iniciar sesión. Comprueba que puedes ver los archivos: eso verifica el acceso público.
 2. Detén el servidor de la carpeta original para liberar el puerto.
@@ -322,59 +312,3 @@ py -m venv .venv
 ```
 
 Si tu comando era `python`, úsalo en lugar de `py`. Cuando las pruebas indiquen `OK` y el servidor arranque, abre `/avistamientos`. La copia nueva comienza con `[]`, porque la base de datos local no viaja por Git. Repite el POST de ejemplo para comprobar que puede crear registros.
-
-## Paso 12. Entregar el enlace
-
-Entrega la URL de la página principal, por ejemplo:
-
-```text
-https://github.com/TU_USUARIO/api-avistamientos
-```
-
-Sustituye el usuario por el tuyo. **No entregues** la dirección `127.0.0.1`, que solamente sirve en tu computador. El enunciado pide el enlace al repositorio público; no exige capturas, un informe ni un video. Si el profesor dio instrucciones adicionales por otro medio, aplícalas también.
-
-### Comprobación de la rúbrica
-
-| Criterio del enunciado | Qué debes poder demostrar |
-| --- | --- |
-| Endpoints y métodos, 1.0 | GET lista, GET individual, POST, PUT y DELETE funcionando. |
-| Códigos de estado, 1.0 | 200, 201, 400 y 404 en los casos indicados. |
-| JSON y datos, 1.0 | Cuatro campos editables, id automático y SQLite persistente. |
-| Que funcione, 1.0 | Una copia limpia se instala y ejecuta siguiendo el README. |
-| Repositorio y README, 1.0 | Repositorio público, instrucciones y ejemplos curl. |
-| Bonus | Resumen por especie y 30 pruebas automatizadas. |
-
-La rúbrica suma 5.0 antes del bonus. Esta tabla identifica las evidencias; la calificación la decide el docente.
-
-## Si haces cambios después de publicar
-
-Trabaja en la carpeta original, guarda y ejecuta otra vez las pruebas. Luego:
-
-```powershell
-git status
-git add .
-git commit -m "Describe aqui el cambio realizado"
-git push
-```
-
-Si hubo cambios remotos que aún no tienes, revisa primero tu estado local y trae esos cambios con `git pull --ff-only`. Si Git indica que hay divergencia, detente a revisar el historial; no uses `push --force` para evitar entender el problema.
-
-## Problemas comunes
-
-| Mensaje o situación | Qué hacer |
-| --- | --- |
-| `py` no se reconoce | Prueba `python --version`; revisa instalación y reinicia la terminal. |
-| No encuentra `requirements.txt` o `app.py` | Abre la carpeta que contiene esos archivos directamente. |
-| `No module named flask` | Instala con `.\.venv\Scripts\python.exe -m pip install -r requirements.txt` y ejecuta con ese mismo Python. |
-| PowerShell bloquea `Activate.ps1` | No necesitas activarlo. Usa los comandos con `.\.venv\Scripts\python.exe` de esta guía. |
-| `Address already in use` | Detén el otro servidor o inicia `app.py --port 5001`; actualiza las URL. |
-| `Failed to connect` | Confirma que el servidor sigue abierto y estás usando su puerto. |
-| curl no logra leer el archivo JSON | Sitúate en la raíz del proyecto y conserva las comillas alrededor de `@ejemplos/crear.json`. |
-| PowerShell interpreta mal `curl` | Escribe `curl.exe`, como en esta guía. |
-| `/` devuelve 404 | Abre `/avistamientos`; no se definió una página de inicio. |
-| GET individual devuelve 404 | Usa el id devuelto por tu POST y comprueba que no lo eliminaste. |
-| POST devuelve 400 | Revisa los cuatro campos, el JSON y `Content-Type: application/json`. |
-| `remote origin already exists` | Ejecuta `git remote -v`. Solo si la URL es incorrecta, cámbiala con `git remote set-url origin URL_REAL`. |
-| `Repository not found` al subir | Comprueba el usuario, el nombre del repositorio y la cuenta autenticada. |
-| El remoto ya tiene un README distinto | Clona ese repositorio en otra carpeta y copia allí los archivos del proyecto, sin `.venv`, `data` ni `.git`; revisa, confirma y sube los cambios. |
-| Las tildes se ven raras en la terminal | Conserva los archivos en UTF-8. Puedes comprobar el JSON de GET en el navegador; la API emite UTF-8. |
