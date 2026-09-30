@@ -1,0 +1,19 @@
+# Entornos y archivos locales de Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# La base se crea automáticamente en cada máquina
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Configuración privada y archivos del sistema
+.env
+.env.*
+.DS_Store
+Thumbs.db
