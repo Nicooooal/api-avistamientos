@@ -6,7 +6,7 @@ Trabajo individual de Ingeniería de Software 2, sesión 17. Implementado en Pyt
 
 La API registra, consulta, reemplaza y elimina avistamientos. Cada registro contiene `id`, `especie`, `lugar`, `fecha` y `observador`. SQLite conserva los datos en disco entre ejecuciones.
 
-Si es tu primera vez con VS Code, empieza por [GUIA_PASO_A_PASO.md](GUIA_PASO_A_PASO.md). Para entender y sustentar el código, lee [EXPLICACION_Y_SESION_16.md](EXPLICACION_Y_SESION_16.md).
+Si es tu primera vez con VS Code, empieza por [GUIA_PASO_A_PASO.md](GUIA_PASO_A_PASO.md). 
 
 ## 1. Requisitos
 
