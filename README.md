@@ -23,11 +23,9 @@ No se necesita instalar un servidor de base de datos: `sqlite3` viene con las di
 Descomprime el ZIP y abre la carpeta que contiene `app.py` y este README. Si lo recibes mediante GitHub, copia la URL real del repositorio y ejecuta:
 
 ```bash
-git clone https://github.com/TU_USUARIO/api-avistamientos.git
-cd api-avistamientos
+git clone git clone https://github.com/Nicooooal/api-avistamientos.git
 ```
-
-`TU_USUARIO` es un marcador que debes sustituir. Todos los comandos siguientes se ejecutan desde esta carpeta.
+ Todos los comandos siguientes se ejecutan desde esta carpeta.
 
 ## 3. Instalar y ejecutar
 
