@@ -1,61 +1,129 @@
 # API REST de avistamientos de aves
 
-Trabajo individual de Ingeniería de Software 2, sesión 17. Implementado en Python con Flask y SQLite, a partir del enunciado y del material de integración y APIs de la sesión 16.
+Proyecto individual de Ingeniería de Software 2, sesión 17.
 
 **Autor:** Nicolas Arias Lasprilla
 
-La API registra, consulta, reemplaza y elimina avistamientos. Cada registro contiene `id`, `especie`, `lugar`, `fecha` y `observador`. SQLite conserva los datos en disco entre ejecuciones.
+Esta API permite registrar, consultar, actualizar y eliminar avistamientos de aves. Está desarrollada con Python, Flask y SQLite. Los datos se guardan en un archivo local y se conservan al reiniciar la aplicación.
 
-Si es tu primera vez con VS Code, empieza por [GUIA_PASO_A_PASO.md](GUIA_PASO_A_PASO.md). 
+Sigue estos pasos para ejecutarla en **Windows, macOS o Linux**. Los comandos se escriben en la terminal; los archivos se abren desde el explorador de VS Code.
 
-## 1. Requisitos
+## 1. Preparar las herramientas
 
-- Python 3.10 o posterior, con `pip` y el módulo estándar `sqlite3` disponibles. Verificado en Python 3.12.14 sobre Linux.
-- Acceso a internet para instalar Flask y sus dependencias la primera vez.
-- Git para clonar o publicar el repositorio.
-- `curl` para las peticiones manuales. En PowerShell de Windows usa `curl.exe`.
-- VS Code es opcional para ejecutar, pero incluye una configuración de depuración y pruebas.
+Necesitas Python 3.10 o posterior con pip y sqlite3, y conexión a internet para descargar las dependencias. Para seguir los pasos con el editor, instala [Visual Studio Code](https://code.visualstudio.com/). También puedes ejecutar los mismos comandos desde la terminal del sistema.
 
-No se necesita instalar un servidor de base de datos: `sqlite3` viene con las distribuciones habituales de Python. La aplicación crea `data/avistamientos.db` y su tabla al arrancar. El archivo está excluido de Git para que cada persona trabaje con su propia base.
-
-## 2. Obtener el proyecto
-
-Descomprime el ZIP y abre la carpeta que contiene `app.py` y este README. Si lo recibes mediante GitHub, copia la URL real del repositorio y ejecuta:
+- **Windows:** instala Python desde [python.org](https://www.python.org/downloads/). Si el instalador ofrece añadir Python al PATH, marca esa opción. Abre PowerShell y ejecuta `py --version`. Si no reconoce el comando, prueba `python --version`.
+- **macOS:** instala Python 3 desde [python.org](https://www.python.org/downloads/macos/). Abre Terminal y ejecuta `python3 --version`.
+- **Linux:** ejecuta `python3 --version` en la terminal. Si falta Python, pip o venv, instálalos con el administrador de paquetes de tu distribución. En Ubuntu o Debian puedes usar:
 
 ```bash
-git clone git clone https://github.com/Nicooooal/api-avistamientos.git
+sudo apt update
+sudo apt install python3 python3-venv python3-pip curl git
 ```
- Todos los comandos siguientes se ejecutan desde esta carpeta.
 
-## 3. Instalar y ejecutar
+Comprueba que la versión de Python sea 3.10 o posterior. Cierra y vuelve a abrir VS Code si instalaste las herramientas mientras estaba abierto.
 
-### Windows: PowerShell o CMD
+Para las pruebas manuales, comprueba curl con `curl.exe --version` en Windows o `curl --version` en macOS/Linux. Si falta, instálalo desde [curl](https://curl.se/download.html) o con el administrador de paquetes del sistema.
+
+SQLite no necesita un servidor separado. Al iniciar la API se crean automáticamente el archivo `data/avistamientos.db` y su tabla.
+
+## 2. Descargar y abrir el proyecto
+
+Elige una de estas dos opciones.
+
+### Opción A: descargar desde GitHub sin usar Git
+
+1. Abre [el repositorio](https://github.com/Nicooooal/api-avistamientos).
+2. Haz clic en **Code** y luego en **Download ZIP**.
+3. Extrae el ZIP. En Windows, haz clic derecho sobre el archivo y selecciona **Extraer todo**; en macOS, haz doble clic; en Linux, utiliza la opción de extraer de tu gestor de archivos.
+4. Abre VS Code y selecciona **Archivo > Abrir carpeta** (**File > Open Folder**).
+5. Selecciona la carpeta extraída que contiene directamente `app.py`, `requirements.txt` y `README.md`. Si descargaste el ZIP desde GitHub, normalmente se llama `api-avistamientos-main`.
+
+### Opción B: clonar con Git
+
+Instala [Git](https://git-scm.com/downloads) si todavía no está disponible. Abre una terminal en la carpeta donde quieras guardar el proyecto y ejecuta una línea a la vez:
+
+```bash
+git clone https://github.com/Nicooooal/api-avistamientos.git
+cd api-avistamientos
+```
+
+Después, en VS Code, selecciona **Archivo > Abrir carpeta** y abre esa carpeta `api-avistamientos`.
+
+### Abrir la terminal del proyecto
+
+1. En VS Code, haz clic en **Terminal > Nueva terminal** (**Terminal > New Terminal**).
+2. En Windows, selecciona **PowerShell** en el menú de perfiles junto al botón `+`. En macOS/Linux utiliza bash o zsh.
+3. Comprueba que estás en la carpeta correcta: ejecuta `dir` en Windows o `ls` en macOS/Linux. Deben aparecer `app.py` y `requirements.txt`.
+
+Ejecuta todos los comandos siguientes desde esa carpeta. Si ya tienes el proyecto abierto, continúa con el paso 3.
+
+## 3. Instalar y ejecutar la API
+
+Usa únicamente el bloque correspondiente a tu sistema operativo. Ejecuta cada comando y espera a que termine antes de escribir el siguiente.
+
+### Windows: PowerShell
+
+Primero, crea el entorno virtual:
 
 ```powershell
 py -m venv .venv
+```
+
+Si el comando disponible en tu equipo es `python`, usa `python -m venv .venv` en ese primer paso.
+
+Luego, instala las dependencias:
+
+```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Por último, inicia la API:
+
+```powershell
 .\.venv\Scripts\python.exe app.py
 ```
 
-Si `py` no existe, prueba `python --version` y usa `python -m venv .venv`. Los demás comandos son iguales. Se usa directamente el Python del entorno virtual: no necesitas activar scripts ni cambiar la política de PowerShell.
+Estos comandos también funcionan en CMD. No es necesario ejecutar un script de activación del entorno.
 
-### macOS o Linux
+### macOS y Linux: bash o zsh
+
+Primero, crea el entorno virtual:
 
 ```bash
 python3 -m venv .venv
+```
+
+Luego, instala las dependencias:
+
+```bash
 ./.venv/bin/python -m pip install -r requirements.txt
+```
+
+Por último, inicia la API:
+
+```bash
 ./.venv/bin/python app.py
 ```
 
-En una distribución Linux que no tenga `venv` o `pip`, instala esos componentes con el administrador de paquetes de tu distribución antes de crear el entorno. En Debian/Ubuntu suelen estar en `python3-venv` y `python3-pip`.
+### Comprobar que está funcionando
 
-### Confirmar el arranque
+1. Busca en la terminal el mensaje `Running on http://127.0.0.1:5000`.
+2. Deja esa terminal abierta: allí está funcionando el servidor.
+3. Abre el navegador y entra a [http://127.0.0.1:5000/avistamientos](http://127.0.0.1:5000/avistamientos).
+4. Si la base es nueva, verás `[]`. Significa que la consulta funcionó y todavía no hay registros.
+5. Para crear, actualizar y eliminar registros, sigue los ejemplos del paso 6.
 
-La terminal debe indicar `Running on http://127.0.0.1:5000`. Déjala abierta y usa una segunda terminal para enviar peticiones. Abre [http://127.0.0.1:5000/avistamientos](http://127.0.0.1:5000/avistamientos): al iniciar con una base nueva devuelve `[]`.
+El aviso de servidor de desarrollo de Flask es normal en esta ejecución local. La dirección raíz `http://127.0.0.1:5000/` devuelve 404 porque no tiene una ruta definida.
 
-La ruta `/` no está definida y devuelve 404 en JSON. El servidor que inicia Flask es para desarrollo local. Su aviso de desarrollo no impide realizar el taller.
+Para detener la API, vuelve a su terminal y pulsa **Ctrl+C**. Para arrancarla otro día, abre la misma carpeta y ejecuta únicamente el comando de inicio de tu sistema; no necesitas instalar todo de nuevo.
 
-Para detenerlo, pulsa `Ctrl+C` en su terminal. Si el puerto está ocupado, añade `--port 5001` a `app.py` y cambia `5000` por `5001` en las peticiones.
+### Seleccionar el intérprete en VS Code (opcional)
+
+1. Haz clic en **Extensiones**, busca **Python** y selecciona **Instalar** en la extensión de Microsoft.
+2. Abre **Ver > Paleta de comandos** (**View > Command Palette**).
+3. Busca **Python: Select Interpreter** y selecciona el intérprete de `.venv`.
+4. Si no aparece, elige la opción para introducir una ruta y selecciona `.venv\Scripts\python.exe` en Windows o `.venv/bin/python` en macOS/Linux.
 
 ## 4. Modelo y validaciones
 
@@ -90,7 +158,16 @@ El resumen agrupa por el nombre exacto después de recortar espacios exteriores.
 
 ## 6. Ejemplos completos con curl
 
-Ejecuta los ejemplos **en este orden**, con el servidor encendido y la terminal en la raíz del proyecto. En **PowerShell**, sustituye `curl` por **`curl.exe`** en todos los comandos. En macOS, Linux o Git Bash utiliza `curl`.
+1. Deja abierta la terminal que ejecuta la API.
+2. Haz clic en **Terminal > Nueva terminal**, o en el botón `+` del panel de terminales.
+3. Comprueba con `dir` (Windows) o `ls` (macOS/Linux) que esta segunda terminal también está en la carpeta donde se encuentra `app.py`.
+4. Ejecuta los ejemplos siguientes en orden, uno por uno.
+
+**En Windows, cambia la primera palabra `curl` por `curl.exe` en cada comando. En macOS/Linux, copia los comandos tal como aparecen.** Por ejemplo, la primera consulta en Windows es:
+
+```powershell
+curl.exe -i --max-time 10 http://127.0.0.1:5000/avistamientos
+```
 
 Los archivos JSON ya vienen incluidos en `ejemplos/`. `--data-binary "@archivo"` lee el contenido del archivo; `-i` permite ver el código HTTP y las cabeceras. Se incluye un límite de espera de 10 segundos.
 
@@ -186,7 +263,9 @@ curl -i --max-time 10 -X DELETE http://127.0.0.1:5000/avistamientos/1
 
 Esperado: **404 NOT FOUND** en los tres casos. El segundo DELETE no cambia el estado: el recurso sigue ausente.
 
-## 7. Pruebas automatizadas
+## 7. Ejecutar las pruebas automatizadas
+
+En VS Code, abre una terminal en la carpeta del proyecto. Puedes usar la segunda terminal de las pruebas manuales. Ejecuta el comando de tu sistema:
 
 Windows:
 
@@ -202,11 +281,38 @@ macOS/Linux:
 
 Son **30 pruebas de integración**, con subcasos de validación. Usan el cliente de pruebas de Flask y una base SQLite temporal para cada prueba. No necesitan un servidor encendido y no modifican `data/avistamientos.db`. Al finalizar se espera `Ran 30 tests` y `OK`.
 
-Cubren CRUD, códigos HTTP, JSON, fechas, datos faltantes, resumen, entradas con texto SQL, idempotencia de PUT y persistencia al crear una nueva instancia de la aplicación con la misma base. No se presenta este conjunto como una garantía de ausencia de errores.
+Cubren CRUD, códigos HTTP, JSON, fechas, datos faltantes, resumen, entradas con texto SQL, idempotencia de PUT y persistencia al crear una nueva instancia de la aplicación con la misma base.
 
 Para comprobar la persistencia manualmente: crea un registro, anota su id, detén el servidor con `Ctrl+C`, vuelve a iniciarlo y consulta ese mismo id **antes de eliminarlo**. Debe seguir disponible.
 
-## 8. Archivos del proyecto
+## 8. Resolver problemas de ejecución
+
+| Mensaje o situación | Qué hacer |
+| --- | --- |
+| No se encuentra `app.py` o `requirements.txt` | Abre en VS Code la carpeta que contiene esos archivos y crea una terminal nueva. |
+| `py` no se reconoce en Windows | Prueba `python --version`. Si funciona, usa `python -m venv .venv`. Si tampoco funciona, revisa la instalación de Python y vuelve a abrir la terminal. |
+| `No module named venv` o error con ensurepip en Linux | Instala el paquete de venv correspondiente a tu Python. En Ubuntu/Debian, usa los paquetes del paso 1 y vuelve a crear el entorno. |
+| `No module named flask` | Ejecuta otra vez el comando de instalación del paso 3 y arranca con el Python de `.venv`. |
+| curl no puede conectarse | Revisa que la terminal del servidor siga abierta y que la URL use el puerto mostrado al arrancar. |
+| curl no encuentra el archivo JSON | Ejecuta la petición desde la carpeta que contiene `ejemplos/`. |
+| Respuesta 404 al consultar un registro | Usa el id que devolvió POST. Un registro eliminado ya no se puede consultar. |
+| El puerto 5000 está ocupado | Detén la otra instancia o inicia la API en el puerto 5001 como se muestra a continuación. |
+
+Para usar otro puerto en Windows:
+
+```powershell
+.\.venv\Scripts\python.exe app.py --port 5001
+```
+
+En macOS/Linux:
+
+```bash
+./.venv/bin/python app.py --port 5001
+```
+
+Después cambia `5000` por `5001` en la dirección del navegador y en todos los comandos curl.
+
+## 9. Archivos del proyecto
 
 | Archivo | Función |
 | --- | --- |
@@ -220,13 +326,13 @@ Para comprobar la persistencia manualmente: crea un registro, anota su id, deté
 | `.vscode/` | Configuración de depuración y descubrimiento de pruebas. |
 | `.gitignore` | Excluye entorno virtual, datos locales y archivos temporales. |
 
-## 9. Contrato y decisiones de diseño
+## 10. Contrato y decisiones de diseño
 
 [openapi.yaml](openapi.yaml) documenta rutas, métodos, cuerpos y respuestas en OpenAPI 3.0.3. Es documentación complementaria: la validación ejecutable está en `app.py`; Flask no carga automáticamente el YAML. No se añade una interfaz Swagger ni una dependencia para ejecutar el contrato.
 
 La comunicación de este ejercicio es sincrónica: el cliente envía la petición y recibe el resultado de la operación. Se conserva `/avistamientos` tal como lo pide el enunciado; versionado por URL y paginación quedan como posibles ampliaciones. La API actual devuelve todos los registros. Colas y API Gateway no son necesarios para una aplicación local de este alcance.
 
-## 10. Uso de IA y fuentes
+## 11. Uso de IA y fuentes
 
 - **Herramienta utilizada:** ChatGPT, modo Codex, de OpenAI.
 - **Modelo exacto:** GPT 6 Astra Alta 
