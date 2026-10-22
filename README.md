@@ -350,8 +350,8 @@ Después cambia `5000` por `5001` en la dirección del navegador y en todos los 
 ## 10. Uso de IA y fuentes
 
 - **Herramienta utilizada:** ChatGPT, modo Codex, de OpenAI.
-- **Modelo exacto:** GPT 6 Astra Alta 
-- **Alcance del apoyo:** generación de la base de código de la API, pruebas, ejemplos, contrato OpenAPI y documentación; ajustes a partir de los documentos de clase. Para la sesión 22 se utilizó también ChatGPT/Codex (GPT-6) como apoyo para refactorizar la validación, preparar las pruebas y redactar su justificación.
+- **Modelo exacto:** GPT 6 Astra Medio 
+- **Alcance del apoyo:** generación de la base de código de la API, pruebas, ejemplos, contrato OpenAPI; revision de documentacion, ajustes a partir de los documentos de clase. Para la sesión 22 se utilizó también ChatGPT/Codex (GPT-6) como apoyo para refactorizar la validación, preparar las pruebas y redactar su justificación y revisar.
 
 
 Material del curso consultado: Jonathan Briceño, *Comunicación entre sistemas: Integración y APIs*, `SESION_16_v2.pdf`; y *Trabajo en clase: construir una API REST*, sesión 17, `Enunciado_Sesion17_Trabajo_API_REST.pdf`. Para el taller de pruebas se consultaron el enunciado y las sesiones 20 y 21 de Jonathan Briceño. Los PDF no se redistribuyen en este repositorio.
