@@ -18,6 +18,7 @@ La tabla se preparó antes de programar la nueva suite y se conserva completa en
 | --- | --- | --- |
 | Especie `ab` (2) | Límite inválido, longitud menor que 3 | Error especie: vecino anterior al mínimo. |
 | Especie `abc` (3) | Límite válido | Aceptar: mínimo incluido. |
+| Especie `abcd` (4) y `a` × 49 | Límites interiores válidos | Aceptar: vecinos interiores de ambos extremos. |
 | Especie `colibrí` (7) | Representativo válido | Aceptar: interior del intervalo. |
 | Especie `a` × 50 | Límite válido | Aceptar: máximo incluido. |
 | Especie `a` × 51 | Límite inválido, longitud mayor que 50 | Error especie: vecino posterior al máximo. |
@@ -39,11 +40,13 @@ Las particiones reducen entradas equivalentes; los límites detectan confusiones
 
 **Especie de 2/3/50/51 caracteres:** son pruebas unitarias porque cruzan solamente la frontera de la función de negocio. Reciben datos y un reloj stub, y verifican el resultado o el mensaje exacto. Detectan errores de límites sin introducir fallos de HTTP o SQL.
 
-**Fecha de mañana:** también es unitaria. Compara contra una referencia temporal controlada; no necesita un servidor. Una prueba adicional cambia el retorno del reloj y demuestra que la misma fecha pasa de inválida a válida. Así se comprueba que la dependencia inyectada realmente controla la decisión.
+**Fecha de mañana:** también es unitaria. Compara contra una referencia temporal controlada; no necesita un servidor. Dos casos parametrizados fijan referencias distintas y comprueban que la misma fecha se rechaza o acepta, con una sola llamada al validador por caso. Así se comprueba que la dependencia inyectada realmente controla la decisión.
 
 **POST válido seguido de GET:** es integración porque atraviesa enrutamiento, lectura JSON, validación, INSERT y SELECT en SQLite, y serialización. Verifica 201, Content-Type, todos los campos, id y Location, y después consulta el registro. La unitaria no detectaría una columna mal enlazada, una escritura omitida ni un código HTTP incorrecto. PUT inválido verifica 400 y que el registro anterior siga intacto; DELETE comprueba que el id eliminado responda 404 y que otro registro permanezca.
 
 Se utiliza `test_client()` de Flask, permitido expresamente por el taller. Recorre la frontera HTTP de la aplicación dentro del proceso, sin abrir un puerto TCP. Cada caso recibe un `tmp_path` distinto y crea su propia base, incluso al parametrizar. Las pruebas no dependen del orden ni de registros manuales. GET de colección no tiene parámetros obligatorios ni un recurso individual que pueda faltar: la colección vacía responde 200, por lo que no se inventa un 400 para esa operación.
+
+La sesión 20 (diap. 25–26) orienta FIRST y AAA: las unitarias son rápidas y sin I/O; cada caso prepara sus datos; el reloj fijo permite repetirlos; los asserts deciden el resultado. Se desarrollaron junto con esta ampliación (Timely), aunque la API base ya existía. Se separaron actualización e idempotencia, repetición de DELETE y escenarios del resumen para tener una sola acción principal. Los GET posteriores a una escritura son observaciones de su efecto exigidas por el taller.
 
 ## 4. Los dobles
 
@@ -59,7 +62,7 @@ Sin el doble, una fecha escrita como “mañana” podría dejar de ser futura a
 
 ## 6. Lectura de cobertura
 
-Ejecución en Linux con Python 3.12.14, pytest 9.1.1, pytest-cov 7.1.0 y coverage 7.16.2: **101 casos aprobados** (55 unitarios y 46 de integración). El comando y el HTML reproducible están explicados en el [README](../README.md). Resumen guardado en [cobertura.txt](cobertura.txt):
+Ejecución en Linux con Python 3.12.14, pytest 9.1.1, pytest-cov 7.1.0 y coverage 7.16.2: **109 casos aprobados** (58 unitarios y 51 de integración). El comando y el HTML reproducible están explicados en el [README](../README.md). Resumen guardado en [cobertura.txt](cobertura.txt):
 
 ```text
 Name            Stmts   Miss Branch BrPart  Cover   Missing
@@ -70,10 +73,10 @@ validacion.py      36      1     16      0    98%   17
 TOTAL             138      7     38      3    94%
 ```
 
-El criterio mide sentencias y ramas de los dos módulos propios; excluye pruebas y dependencias al seleccionar `--cov=app --cov=validacion`. Se recorrieron 131/138 sentencias y 35/38 salidas de ramas. El 94% mostrado combina ambas medidas y está redondeado. No demuestra ausencia de defectos: una línea ejecutada no implica que sus resultados estén bien comprobados.
+Según la sesión 21, cada criterio usa elementos ejercitados / elementos totales. Por separado, las sentencias alcanzan 131/138 = **94,93%** y las ramas 35/38 = **92,11%**. El criterio combinado de la herramienta mide sentencias y ramas de los dos módulos propios; excluye pruebas y dependencias al seleccionar `--cov=app --cov=validacion`. Se recorrieron 131/138 sentencias y 35/38 salidas de ramas. El 94% mostrado combina ambas medidas y está redondeado. No demuestra ausencia de defectos: una línea ejecutada no implica que sus resultados estén bien comprobados.
 
 La línea 89, respuesta genérica 500, no está cubierta. Merece una futura integración con un fallo de base controlado y propagación de excepciones desactivada, para verificar JSON y que no se expongan detalles internos. La línea 145 contempla un registro eliminado entre la consulta y el UPDATE; una prueba secuencial normal no recorre esa carrera. Se deja fuera del alcance concurrente declarado, sin presentarla como cubierta.
 
-Las líneas 165–168 corresponden al arranque por consola; 53→55 omite configuración de pruebas. La suite usa la fábrica con configuración temporal. La línea 17 de `validacion.py` lee el reloj real: se sustituye deliberadamente para obtener determinismo. No se agregan asserts triviales solo para elevar esos porcentajes. Una medición inicial de cinco casos de especie obtuvo 71% en validación y mostró pendientes las ramas de estructura, tipos y fechas; la suite completa las recorre.
+Las líneas 165–168 corresponden al arranque por consola; 53→55 omite configuración de pruebas. La suite usa la fábrica con configuración temporal. La línea 17 de `validacion.py` lee el reloj real: se sustituye deliberadamente para obtener determinismo. No se agregan asserts triviales solo para elevar esos porcentajes. 
 
-**Fuentes:** enunciado del taller de la sesión 22; [pruebas con Flask](https://flask.palletsprojects.com/en/stable/testing/); [configuración de pytest-cov](https://pytest-cov.readthedocs.io/en/latest/config.html). Se emplean los conceptos solicitados por el enunciado; no se atribuyen ejemplos a diapositivas de pruebas que no se han adjuntado. El apoyo de IA está declarado en el README. Los resultados indicados corresponden a ejecuciones realizadas durante la preparación del proyecto, no a una ejecución personal del estudiante en su equipo.
+**Fuentes:** Jonathan Briceño, sesión 20, *Pruebas unitarias y dobles de prueba* (diap. 20, 22, 25–32), y sesión 21, *Pruebas II: Integración y cobertura* (herramientas, dobles, TDD, integración de API y criterios de cobertura); enunciado del taller; [pruebas con Flask](https://flask.palletsprojects.com/en/stable/testing/); [configuración de pytest-cov](https://pytest-cov.readthedocs.io/en/latest/config.html). La comparación completa está en [relacion-sesiones20-21.md](relacion-sesiones20-21.md). TDD y mutación se explican en clase, pero no son entregables obligatorios del taller: no se afirma haber seguido un ciclo rojo-verde-refactor ni haber ejecutado una herramienta de mutación. El apoyo de IA está declarado en el README. Los resultados indicados corresponden a ejecuciones realizadas durante la preparación del proyecto, no a una ejecución personal del estudiante en su equipo.

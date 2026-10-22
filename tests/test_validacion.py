@@ -8,7 +8,7 @@ import pytest
 from validacion import ErrorValidacion, Reloj, validar_avistamiento
 
 
-@pytest.mark.parametrize("especie", ["abc", "colibrí", "a" * 50], ids=["minimo_3", "interior_7", "maximo_50"])
+@pytest.mark.parametrize("especie", ["abc", "abcd", "colibrí", "a" * 49, "a" * 50], ids=["minimo_3", "vecino_4", "interior_7", "vecino_49", "maximo_50"])
 def test_acepta_especie_dentro_de_3_a_50_caracteres(datos, reloj, especie):
     # Arrange
     entrada = {**datos, "especie": especie}
@@ -128,15 +128,22 @@ def test_recorta_espacios_antes_de_validar_sin_modificar_la_entrada(datos, reloj
     assert entrada == original
 
 
-def test_la_misma_fecha_cambia_de_validez_segun_el_reloj_inyectado(datos):
+@pytest.mark.parametrize("hoy,aceptada", [(date(2026, 10, 20), False), (date(2026, 10, 21), True)], ids=["fecha_futura", "fecha_de_hoy"])
+def test_la_fecha_se_evalua_con_el_reloj_inyectado(datos, hoy, aceptada):
     # Arrange: Mock usado como stub, sin verificar interacciones.
     reloj = Mock(spec=Reloj)
-    reloj.hoy.return_value = date(2026, 10, 20)
-    # Act
-    with pytest.raises(ErrorValidacion) as error:
-        validar_avistamiento(datos, reloj)
-    reloj.hoy.return_value = date(2026, 10, 21)
-    resultado = validar_avistamiento(datos, reloj)
+    reloj.hoy.return_value = hoy
+    resultado = None
+    error = None
+    # Act: una llamada al validador por caso parametrizado.
+    try:
+        resultado = validar_avistamiento(datos, reloj)
+    except ErrorValidacion as recibido:
+        error = recibido
     # Assert
-    assert "posterior a hoy" in str(error.value)
-    assert resultado == datos
+    if aceptada:
+        assert error is None
+        assert resultado == datos
+    else:
+        assert resultado is None
+        assert str(error) == "El campo 'fecha' no puede ser posterior a hoy."

@@ -212,7 +212,7 @@ En la segunda terminal:
 La parte final debe mostrar:
 
 ```text
-101 passed in ...s
+109 passed in ...s
 ```
 
 El tiempo varía. Las pruebas emplean bases temporales y no alteran los datos manuales. No necesitas detener ni iniciar el servidor para ejecutarlas.
@@ -309,7 +309,7 @@ py -m venv .venv
 .\.venv\Scripts\python.exe app.py
 ```
 
-Si tu comando era `python`, úsalo en lugar de `py`. Cuando las pruebas indiquen `101 passed` y el servidor arranque, abre `/avistamientos`. La copia nueva comienza con `[]`, porque la base de datos local no viaja por Git. Repite el POST de ejemplo para comprobar que puede crear registros.
+Si tu comando era `python`, úsalo en lugar de `py`. Cuando las pruebas indiquen `109 passed` y el servidor arranque, abre `/avistamientos`. La copia nueva comienza con `[]`, porque la base de datos local no viaja por Git. Repite el POST de ejemplo para comprobar que puede crear registros.
 
 
 

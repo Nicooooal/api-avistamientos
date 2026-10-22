@@ -2,7 +2,7 @@
 
 Proyecto individual de Ingeniería de Software 2: API de la sesión 17 y taller de pruebas de la sesión 22.
 
-La justificación del taller está en [docs/justificacion-pruebas.md](docs/justificacion-pruebas.md); la tabla previa de casos, en [docs/casos-validacion.md](docs/casos-validacion.md).
+La justificación del taller está en [docs/justificacion-pruebas.md](docs/justificacion-pruebas.md); la tabla de casos, en [docs/casos-validacion.md](docs/casos-validacion.md). La relación con las dos clases está en [docs/relacion-sesiones20-21.md](docs/relacion-sesiones20-21.md).
 
 **Autor:** Nicolas Arias Lasprilla
 
@@ -283,7 +283,7 @@ macOS/Linux:
 ./.venv/bin/python -m pytest -v
 ```
 
-Se esperan **101 casos aprobados**: 55 casos unitarios y 46 de integración, incluyendo las combinaciones parametrizadas. Cada función de prueba contiene comentarios Arrange, Act y Assert. La cantidad no es el criterio de calidad; la selección se explica en el documento de justificación.
+Se esperan **109 casos aprobados**: 58 casos unitarios y 51 de integración, incluyendo las combinaciones parametrizadas. Cada función de prueba contiene comentarios Arrange, Act y Assert. La cantidad no es el criterio de calidad; la selección se explica en el documento de justificación.
 
 Para ejecutar un solo nivel, añade `tests/test_validacion.py` (unitarias) o `tests/test_api.py` (integración) después de `pytest`.
 

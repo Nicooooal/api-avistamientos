@@ -6,6 +6,7 @@ Fecha de referencia del stub: 2026-10-21. Los campos no mencionados contienen da
 | --- | --- | --- | --- |
 | especie: `ab` (2) | Límite inválido | Error especie | Justo antes del mínimo. |
 | especie: `abc` (3) | Límite válido | Aceptar | Mínimo incluido. |
+| especie: `abcd` (4) y `a` repetida 49 veces | Límite válido interior | Aceptar | Vecinos interiores de los extremos 3 y 50, añadidos al revisar la sesión 20. |
 | especie: `colibrí` (7) | Representativo válido | Aceptar | Interior de la partición aceptada. |
 | especie: `a` repetida 50 veces | Límite válido | Aceptar | Máximo incluido. |
 | especie: `a` repetida 51 veces | Límite inválido | Error especie | Justo después del máximo. |
@@ -24,4 +25,4 @@ Fecha de referencia del stub: 2026-10-21. Los campos no mencionados contienen da
 | Cuerpo: lista, null o texto | Inválido | Error de objeto JSON | Frontera estructural de entrada. |
 | Campo adicional `id` o `color` | Inválido | Error de campo no permitido | El identificador lo genera el sistema. |
 
-Esta tabla se preparó antes de implementar la nueva suite. En las pruebas HTTP se reutilizan los límites de la regla para comprobar que el controlador traduce el error a 400 y no modifica la base.
+La versión inicial de esta tabla se preparó antes de implementar la nueva suite; los casos 4 y 49 se incorporaron después al contrastarla con las diapositivas. En las pruebas HTTP se reutilizan los límites de la regla para comprobar que el controlador traduce el error a 400 y no modifica la base.

@@ -70,7 +70,7 @@ def test_id_inexistente_o_fuera_de_rango_devuelve_404_sin_alterar_datos(client, 
     comprobar(client.get("/avistamientos"), 200, [])
 
 
-def test_put_reemplaza_campos_conserva_id_y_es_idempotente(client, datos):
+def test_put_reemplaza_campos_y_conserva_id(client, datos):
     # Arrange
     creado = crear(client, datos)
     ruta = f"/avistamientos/{creado['id']}"
@@ -78,11 +78,23 @@ def test_put_reemplaza_campos_conserva_id_y_es_idempotente(client, datos):
     esperado = {"id": creado["id"], **nuevos}
     # Act
     primera = client.put(ruta, json=nuevos)
-    segunda = client.put(ruta, json=nuevos)
     # Assert
     comprobar(primera, 200, esperado)
-    comprobar(segunda, 200, esperado)
     comprobar(client.get(ruta), 200, esperado)
+    comprobar(client.get("/avistamientos"), 200, [esperado])
+
+
+def test_repetir_put_no_crea_otro_registro_ni_cambia_el_resultado(client, datos):
+    # Arrange: el recurso ya recibió una actualización correcta.
+    creado = crear(client, datos)
+    ruta = f"/avistamientos/{creado['id']}"
+    nuevos = {**datos, "lugar": "Humedal"}
+    esperado = {"id": creado["id"], **nuevos}
+    comprobar(client.put(ruta, json=nuevos), 200, esperado)
+    # Act
+    respuesta = client.put(ruta, json=nuevos)
+    # Assert
+    comprobar(respuesta, 200, esperado)
     comprobar(client.get("/avistamientos"), 200, [esperado])
 
 
@@ -145,21 +157,62 @@ def test_delete_elimina_solo_el_id_indicado_y_consulta_posterior_responde_404(cl
     # Assert
     comprobar(respuesta, 200, {"mensaje": "Avistamiento eliminado.", "id": a["id"]})
     comprobar(client.get(ruta), 404, {"error": "Avistamiento no encontrado."})
-    comprobar(client.delete(ruta), 404, {"error": "Avistamiento no encontrado."})
     comprobar(client.get("/avistamientos"), 200, [b])
 
 
-def test_resumen_refleja_creacion_actualizacion_y_borrado(client, datos):
+def test_repetir_delete_responde_404_y_conserva_la_ausencia(client, datos):
     # Arrange
-    comprobar(client.get("/avistamientos/resumen"), 200, [])
-    a, b = crear(client, datos), crear(client, datos)
-    comprobar(client.get("/avistamientos/resumen"), 200, [{"especie": "colibrí", "cantidad": 2}])
+    creado = crear(client, datos)
+    ruta = f"/avistamientos/{creado['id']}"
+    comprobar(client.delete(ruta), 200, {"mensaje": "Avistamiento eliminado.", "id": creado["id"]})
     # Act
-    client.put(f"/avistamientos/{a['id']}", json={**datos, "especie": "copetón"})
-    client.delete(f"/avistamientos/{b['id']}")
+    respuesta = client.delete(ruta)
+    # Assert
+    comprobar(respuesta, 404, {"error": "Avistamiento no encontrado."})
+    comprobar(client.get("/avistamientos"), 200, [])
+
+
+def test_resumen_sin_registros_devuelve_array_vacio(client):
+    # Arrange
+    ruta = "/avistamientos/resumen"
+    # Act
+    respuesta = client.get(ruta)
+    # Assert
+    comprobar(respuesta, 200, [])
+
+
+def test_resumen_agrupa_registros_por_especie(client, datos):
+    # Arrange
+    crear(client, datos)
+    crear(client, datos)
+    crear(client, {**datos, "especie": "copetón"})
+    # Act
     respuesta = client.get("/avistamientos/resumen")
     # Assert
-    comprobar(respuesta, 200, [{"especie": "copetón", "cantidad": 1}])
+    comprobar(respuesta, 200, [{"especie": "colibrí", "cantidad": 2}, {"especie": "copetón", "cantidad": 1}])
+
+
+def test_resumen_refleja_el_cambio_de_especie(client, datos):
+    # Arrange
+    a = crear(client, datos)
+    crear(client, datos)
+    nuevos = {**datos, "especie": "copetón"}
+    comprobar(client.put(f"/avistamientos/{a['id']}", json=nuevos), 200, {"id": a["id"], **nuevos})
+    # Act
+    respuesta = client.get("/avistamientos/resumen")
+    # Assert
+    comprobar(respuesta, 200, [{"especie": "colibrí", "cantidad": 1}, {"especie": "copetón", "cantidad": 1}])
+
+
+def test_resumen_deja_de_contar_un_registro_eliminado(client, datos):
+    # Arrange
+    a = crear(client, datos)
+    crear(client, datos)
+    comprobar(client.delete(f"/avistamientos/{a['id']}"), 200, {"mensaje": "Avistamiento eliminado.", "id": a["id"]})
+    # Act
+    respuesta = client.get("/avistamientos/resumen")
+    # Assert
+    comprobar(respuesta, 200, [{"especie": "colibrí", "cantidad": 1}])
 
 
 def test_registro_persiste_al_recrear_aplicacion_con_el_mismo_archivo(client, app, datos, reloj):
@@ -175,14 +228,14 @@ def test_registro_persiste_al_recrear_aplicacion_con_el_mismo_archivo(client, ap
 def test_texto_sql_se_guarda_como_dato_y_la_tabla_permanece(client, datos):
     # Arrange
     entrada = {**datos, "especie": "ave'); DROP TABLE avistamientos; --"}
+    otro = crear(client, datos)
     # Act
     respuesta = client.post("/avistamientos", json=entrada)
     # Assert
     creado = respuesta.get_json()
     comprobar(respuesta, 201, {"id": creado["id"], **entrada})
-    otro = crear(client, datos)
     assert otro["id"] != creado["id"]
-    comprobar(client.get("/avistamientos"), 200, [creado, otro])
+    comprobar(client.get("/avistamientos"), 200, [otro, creado])
 
 
 @pytest.mark.parametrize("cuerpo", ["[]", "null", '"texto"', "42"])
