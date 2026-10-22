@@ -22,10 +22,10 @@ Debes ver una versión para cada herramienta. Si solo falla `py`, prueba `python
 
 ## Paso 2. Extraer y abrir la carpeta correcta
 
-1. Descarga `API_Avistamientos_VSCode.zip`.
+1. Abre el repositorio en GitHub y selecciona **Code > Download ZIP**.
 2. En el Explorador de archivos, haz clic derecho y selecciona **Extraer todo**. No trabajes dentro del ZIP.
 3. En VS Code selecciona **Archivo > Abrir carpeta**.
-4. Abre la carpeta `api-avistamientos` que contiene `app.py`, `requirements.txt` y `README.md` directamente.
+4. Abre la carpeta extraída (`api-avistamientos-main` si descargaste desde GitHub) que contiene `app.py`, `requirements.txt` y `README.md` directamente.
 5. En el panel izquierdo debes ver esos archivos, además de `tests`, `ejemplos` y `.vscode`.
 6. Abre `GUIA_PASO_A_PASO.md`. Con **Ctrl+Shift+V** puedes visualizarla con formato.
 7. Abre una terminal nueva y selecciona **PowerShell** en el menú de perfiles si aparece otro tipo de terminal.
@@ -52,7 +52,7 @@ Si tu sistema utiliza `python` en lugar de `py`, ejecuta `python -m venv .venv`.
 La carpeta `.venv` contendrá el intérprete y las dependencias del proyecto. A continuación:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 ```
 
 Cuando termine sin errores, comprueba Flask:
@@ -206,20 +206,18 @@ Las tres deben responder `404 NOT FOUND`. Así verificas los casos de inexistenc
 En la segunda terminal:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m pytest -v
 ```
 
 La parte final debe mostrar:
 
 ```text
-Ran 30 tests in ...s
-
-OK
+101 passed in ...s
 ```
 
 El tiempo varía. Las pruebas emplean bases temporales y no alteran los datos manuales. No necesitas detener ni iniciar el servidor para ejecutarlas.
 
-Para comprenderlas, abre `tests/test_api.py`. Cada función cuyo nombre empieza por `test_` comprueba un comportamiento. `assertEqual` compara el resultado obtenido con el esperado. Si aparece `FAILED`, lee el nombre de la prueba y el error antes de entregar.
+Para comprenderlas, abre `tests/test_api.py`. Cada función cuyo nombre empieza por `test_` comprueba un comportamiento. `assert` verifica una condición esperada. Si aparece `FAILED`, lee el nombre de la prueba y el error antes de entregar.
 
 
 ## Paso 8. Crear el repositorio público en GitHub
@@ -306,9 +304,13 @@ Cuando termine, recarga la página del repositorio. Debes ver los archivos extra
 git clone https://github.com/TU_USUARIO/api-avistamientos.git api-avistamientos-verificacion
 cd api-avistamientos-verificacion
 py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest -v
 .\.venv\Scripts\python.exe app.py
 ```
 
-Si tu comando era `python`, úsalo en lugar de `py`. Cuando las pruebas indiquen `OK` y el servidor arranque, abre `/avistamientos`. La copia nueva comienza con `[]`, porque la base de datos local no viaja por Git. Repite el POST de ejemplo para comprobar que puede crear registros.
+Si tu comando era `python`, úsalo en lugar de `py`. Cuando las pruebas indiquen `101 passed` y el servidor arranque, abre `/avistamientos`. La copia nueva comienza con `[]`, porque la base de datos local no viaja por Git. Repite el POST de ejemplo para comprobar que puede crear registros.
+
+
+
+Para generar e interpretar la cobertura del taller de la sesión 22, sigue el paso 7 del [README](README.md).

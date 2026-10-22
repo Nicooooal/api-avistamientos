@@ -7,6 +7,7 @@ info:
     POST y PUT reciben los cuatro campos editables; el id lo asigna el sistema.
     PUT reemplaza esos campos y no crea recursos inexistentes.
     Los textos se recortan en sus extremos y no pueden quedar vacíos.
+    La especie debe tener entre 3 y 50 caracteres y la fecha no puede ser futura.
     Los cuerpos JSON tienen un límite de 64 KiB.
 servers:
   - url: http://127.0.0.1:5000
@@ -174,11 +175,16 @@ components:
       minLength: 1
       pattern: '\S'
       description: Texto con al menos un carácter no blanco; se recortan los espacios exteriores.
+    Especie:
+      type: string
+      minLength: 3
+      maxLength: 50
+      description: Longitud evaluada después de recortar espacios exteriores.
     Fecha:
       type: string
       format: date
       pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-      description: Fecha real del calendario entre los años 0001 y 9999.
+      description: Fecha real del calendario entre los años 0001 y 9999, no posterior al día local del servidor.
       example: '2026-09-29'
     DatosAvistamiento:
       type: object
@@ -186,7 +192,7 @@ components:
       required: [especie, lugar, fecha, observador]
       properties:
         especie:
-          $ref: '#/components/schemas/TextoObligatorio'
+          $ref: '#/components/schemas/Especie'
         lugar:
           $ref: '#/components/schemas/TextoObligatorio'
         fecha:
@@ -205,7 +211,7 @@ components:
           maximum: 9223372036854775807
           readOnly: true
         especie:
-          $ref: '#/components/schemas/TextoObligatorio'
+          $ref: '#/components/schemas/Especie'
         lugar:
           $ref: '#/components/schemas/TextoObligatorio'
         fecha:
@@ -250,3 +256,4 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             error: Error interno del servidor.
+

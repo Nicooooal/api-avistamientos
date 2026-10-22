@@ -1,5 +1,7 @@
 # Cómo funciona el proyecto y cómo se relaciona con la sesión 16
 
+La actualización de la sesión 22 está documentada en [la justificación de pruebas](docs/justificacion-pruebas.md).
+
 ## 1. Qué construimos
 
 El recurso es un **avistamiento de ave**. La API define cómo otros programas pueden registrarlo y consultarlo. En las pruebas manuales, `curl` actúa como cliente y Flask recibe las peticiones. SQLite guarda los registros en un archivo.
@@ -10,7 +12,7 @@ El cliente necesita conocer la URL, el método HTTP y el formato del JSON. No ne
 
 1. `curl` lee `ejemplos/crear.json` y envía una petición POST a `/avistamientos`.
 2. Flask encuentra `crear_avistamiento()`, asociada con esa ruta y ese método.
-3. `validar_avistamiento()` revisa el formato y los cuatro campos obligatorios.
+3. `leer_avistamiento()` lee el JSON y llama a `validar_avistamiento(datos, reloj)` en `validacion.py`, que aplica la regla de negocio.
 4. Si algo falla, se responde 400 en JSON y no se ejecuta el INSERT.
 5. Si los datos son válidos, se ejecuta un INSERT con parámetros `?`.
 6. SQLite genera el id y el bloque `with db:` confirma la transacción.
@@ -27,7 +29,7 @@ Esta secuencia es sincrónica: el cliente recibe el resultado después de ejecut
 | `get_db()` | Abre o reutiliza la conexión SQLite correspondiente al contexto de la petición. |
 | `g` | Almacena esa conexión durante el contexto; no es la base de datos ni una lista global de registros. |
 | `sqlite3.Row` | Permite acceder a las columnas por nombre y convertir cada fila en un diccionario. |
-| `validar_avistamiento()` | Comprueba JSON, campos, tipos, textos no vacíos y fechas reales. |
+| `validar_avistamiento(datos, reloj)` en `validacion.py` | Comprueba objeto, campos, tipos, longitud de especie y fecha real no futura. |
 | `buscar_avistamiento(id)` | Consulta por identificador y devuelve una fila o `None`. |
 | `create_app()` | Construye y configura la aplicación; permite elegir una base temporal en las pruebas. |
 | `CREATE TABLE IF NOT EXISTS` | Crea la tabla al arrancar y conserva los registros si ya existía. |
@@ -128,9 +130,9 @@ OpenAPI permite describir el contrato sin obligar al consumidor a leer Python. S
 
 ## 8. Cómo explicar las pruebas
 
-Son pruebas de integración porque recorren el enrutamiento HTTP de Flask, las validaciones y una base SQLite real temporal. El cliente de Flask simula las peticiones dentro del proceso; las pruebas no abren un puerto de red. Las pruebas manuales con curl sí recorren el servidor HTTP local.
+Las de `tests/test_api.py` son pruebas de integración porque recorren el enrutamiento HTTP de Flask, las validaciones y una base SQLite real temporal. El cliente de Flask simula las peticiones dentro del proceso; las pruebas no abren un puerto de red. Las pruebas manuales con curl sí recorren el servidor HTTP local.
 
-Cada `setUp()` crea una aplicación y una base vacía, por lo que una prueba no depende de los datos de la anterior. Las aserciones revisan código, contenido y cambios guardados. La prueba de persistencia vuelve a construir la aplicación con el mismo archivo y comprueba que el registro sigue allí.
+Las fixtures de pytest crean una aplicación y una base vacía para cada caso, por lo que una prueba no depende de los datos de la anterior. Las aserciones revisan código, contenido y cambios guardados. La prueba de persistencia vuelve a construir la aplicación con el mismo archivo y comprueba que el registro sigue allí.
 
 ## 9. Preguntas para comprobar que lo entiendes
 
@@ -148,3 +150,6 @@ Cada `setUp()` crea una aplicación y una base vacía, por lo que una prueba no 
 12. **¿Qué aportó la IA?** La base de implementación, pruebas y documentación. Declara la herramienta y el modelo verificable, y explica qué comprobaste personalmente sin atribuirte revisiones que no hiciste.
 
 Fuentes: los dos documentos de clase suministrados y las referencias oficiales enlazadas en el README. La precisión sobre idempotencia se apoya en RFC 9110, sección 9.2.2.
+
+
+Las pruebas de `tests/test_validacion.py` son unitarias: llaman directamente al validador y usan un reloj stub, sin solicitudes HTTP ni base de datos.

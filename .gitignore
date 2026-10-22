@@ -4,6 +4,10 @@ venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.coverage
+.coverage.*
+coverage.json
+htmlcov/
 
 # La base se crea automáticamente en cada máquina
 data/
@@ -17,3 +21,4 @@ data/
 .env.*
 .DS_Store
 Thumbs.db
+

@@ -1,16 +1,14 @@
 """API REST de avistamientos de aves: Flask + SQLite."""
 
 import argparse
-import re
 import sqlite3
-from datetime import date
 from pathlib import Path
 
 from flask import Flask, g, jsonify, request, url_for
 from werkzeug.exceptions import BadRequest, HTTPException
 
 
-CAMPOS = ("especie", "lugar", "fecha", "observador")
+from validacion import CAMPOS, ErrorValidacion, RelojSistema, validar_avistamiento
 MAX_SQLITE_ID = 9223372036854775807
 
 
@@ -24,41 +22,14 @@ def get_db():
     return g.db
 
 
-def validar_avistamiento():
-    """POST y PUT necesitan un objeto JSON con los cuatro campos de texto."""
+def leer_avistamiento(reloj):
+    """Adapta la petición HTTP a la regla de negocio independiente."""
     if not request.is_json:
         raise BadRequest("Envía el cuerpo con Content-Type: application/json.")
-
-    datos = request.get_json()
-    if not isinstance(datos, dict):
-        raise BadRequest("El cuerpo debe ser un objeto JSON.")
-
-    faltantes = [campo for campo in CAMPOS if campo not in datos]
-    if faltantes:
-        raise BadRequest("Faltan campos obligatorios: " + ", ".join(faltantes) + ".")
-
-    adicionales = sorted(set(datos) - set(CAMPOS))
-    if adicionales:
-        raise BadRequest(
-            "Campos no permitidos: " + ", ".join(adicionales)
-            + ". El id lo asigna el sistema."
-        )
-
-    limpios = {}
-    for campo in CAMPOS:
-        valor = datos[campo]
-        if not isinstance(valor, str) or not valor.strip():
-            raise BadRequest(f"El campo '{campo}' debe ser texto no vacío.")
-        limpios[campo] = valor.strip()
-
-    if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", limpios["fecha"]):
-        raise BadRequest("La fecha debe tener el formato AAAA-MM-DD.")
     try:
-        date.fromisoformat(limpios["fecha"])
-    except ValueError as error:
-        raise BadRequest("La fecha indicada no existe en el calendario.") from error
-
-    return limpios
+        return validar_avistamiento(request.get_json(), reloj)
+    except ErrorValidacion as error:
+        raise BadRequest(str(error)) from error
 
 
 def buscar_avistamiento(avistamiento_id):
@@ -77,6 +48,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         DATABASE=str(Path(__file__).resolve().parent / "data" / "avistamientos.db"),
         MAX_CONTENT_LENGTH=64 * 1024,
+        RELOJ=RelojSistema(),
     )
     if test_config:
         app.config.update(test_config)
@@ -142,7 +114,7 @@ def create_app(test_config=None):
 
     @app.post("/avistamientos")
     def crear_avistamiento():
-        datos = validar_avistamiento()
+        datos = leer_avistamiento(app.config["RELOJ"])
         db = get_db()
         # Los ? separan los datos del SQL: no se concatenan entradas del usuario.
         with db:
@@ -162,7 +134,7 @@ def create_app(test_config=None):
     def actualizar_avistamiento(avistamiento_id):
         if buscar_avistamiento(avistamiento_id) is None:
             return jsonify(error="Avistamiento no encontrado."), 404
-        datos = validar_avistamiento()
+        datos = leer_avistamiento(app.config["RELOJ"])
         db = get_db()
         with db:
             cursor = db.execute(
@@ -194,3 +166,4 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=5000, help="Puerto local (por defecto: 5000)")
     args = parser.parse_args()
     create_app().run(host="127.0.0.1", port=args.port, debug=False)
+

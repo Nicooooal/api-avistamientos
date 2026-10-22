@@ -1,6 +1,8 @@
 # API REST de avistamientos de aves
 
-Proyecto individual de Ingeniería de Software 2, sesión 17.
+Proyecto individual de Ingeniería de Software 2: API de la sesión 17 y taller de pruebas de la sesión 22.
+
+La justificación del taller está en [docs/justificacion-pruebas.md](docs/justificacion-pruebas.md); la tabla previa de casos, en [docs/casos-validacion.md](docs/casos-validacion.md).
 
 **Autor:** Nicolas Arias Lasprilla
 
@@ -130,9 +132,9 @@ Para detener la API, vuelve a su terminal y pulsa **Ctrl+C**. Para arrancarla ot
 | Campo | Tipo JSON | Regla |
 | --- | --- | --- |
 | `id` | Número entero | Lo genera SQLite. No se envía en POST ni en el cuerpo de PUT. |
-| `especie` | Texto | Obligatorio y no vacío. |
+| `especie` | Texto | Entre 3 y 50 caracteres después de recortar espacios exteriores. |
 | `lugar` | Texto | Obligatorio y no vacío. |
-| `fecha` | Texto | Fecha real en formato `AAAA-MM-DD`. |
+| `fecha` | Texto | Fecha real en formato `AAAA-MM-DD`, no posterior a hoy según la fecha local del servidor. |
 | `observador` | Texto | Obligatorio y no vacío. |
 
 POST y PUT reciben un objeto JSON con los cuatro campos editables y `Content-Type: application/json`. Se recortan los espacios exteriores. Los campos adicionales, valores nulos, tipos incorrectos, fechas imposibles y cuerpos mal formados producen 400. El máximo de cuerpo es 64 KiB; al superarlo se responde 413.
@@ -263,27 +265,45 @@ curl -i --max-time 10 -X DELETE http://127.0.0.1:5000/avistamientos/1
 
 Esperado: **404 NOT FOUND** en los tres casos. El segundo DELETE no cambia el estado: el recurso sigue ausente.
 
-## 7. Ejecutar las pruebas automatizadas
+## 7. Ejecutar pruebas y generar cobertura
 
-En VS Code, abre una terminal en la carpeta del proyecto. Puedes usar la segunda terminal de las pruebas manuales. Ejecuta el comando de tu sistema:
+Abre **Terminal > Nueva terminal** en VS Code, dentro de la carpeta del proyecto. Instala las herramientas de pruebas una vez; este archivo incluye también Flask.
 
-Windows:
+Windows (PowerShell):
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest -v
 ```
 
 macOS/Linux:
 
 ```bash
-./.venv/bin/python -m unittest discover -s tests -v
+./.venv/bin/python -m pip install -r requirements-dev.txt
+./.venv/bin/python -m pytest -v
 ```
 
-Son **30 pruebas de integración**, con subcasos de validación. Usan el cliente de pruebas de Flask y una base SQLite temporal para cada prueba. No necesitan un servidor encendido y no modifican `data/avistamientos.db`. Al finalizar se espera `Ran 30 tests` y `OK`.
+Se esperan **101 casos aprobados**: 55 casos unitarios y 46 de integración, incluyendo las combinaciones parametrizadas. Cada función de prueba contiene comentarios Arrange, Act y Assert. La cantidad no es el criterio de calidad; la selección se explica en el documento de justificación.
 
-Cubren CRUD, códigos HTTP, JSON, fechas, datos faltantes, resumen, entradas con texto SQL, idempotencia de PUT y persistencia al crear una nueva instancia de la aplicación con la misma base.
+Para ejecutar un solo nivel, añade `tests/test_validacion.py` (unitarias) o `tests/test_api.py` (integración) después de `pytest`.
 
-Para comprobar la persistencia manualmente: crea un registro, anota su id, detén el servidor con `Ctrl+C`, vuelve a iniciarlo y consulta ese mismo id **antes de eliminarlo**. Debe seguir disponible.
+Las pruebas no necesitan un servidor encendido. Las de integración usan `test_client()` de Flask y una base SQLite temporal nueva por caso. El reloj fijo devuelve 2026-10-21; la ejecución normal de la API utiliza la fecha local del sistema. Las pruebas no modifican `data/avistamientos.db`.
+
+Genera cobertura de líneas y ramas en Windows:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest --cov=app --cov=validacion --cov-branch --cov-report=term-missing --cov-report=html
+```
+
+En macOS/Linux:
+
+```bash
+./.venv/bin/python -m pytest --cov=app --cov=validacion --cov-branch --cov-report=term-missing --cov-report=html
+```
+
+Al terminar, revisa el resumen de la terminal. Para abrir el detalle, entra a la carpeta `htmlcov` desde el explorador de archivos del sistema y abre `index.html` con el navegador. La columna Missing señala líneas y ramas no recorridas. El resumen de referencia está guardado en [docs/cobertura.txt](docs/cobertura.txt); su interpretación está en la sección 6 de la justificación. El reporte HTML se genera localmente y no se sube a Git.
+
+Para comprobar la persistencia manualmente: crea un registro, anota su id, detén el servidor con Ctrl+C, vuelve a iniciarlo y consulta ese id antes de eliminarlo.
 
 ## 8. Resolver problemas de ejecución
 
@@ -316,7 +336,12 @@ Después cambia `5000` por `5001` en la dirección del navegador y en todos los 
 
 | Archivo | Función |
 | --- | --- |
-| `app.py` | Conexión SQLite, creación de tabla, validaciones y endpoints. |
+| `app.py` | Adaptación HTTP, conexión SQLite, creación de tabla y endpoints. |
+| `validacion.py` | Regla de negocio, error de validación e interfaz del reloj. |
+| `requirements-dev.txt` | Herramientas de pruebas y cobertura. |
+| `tests/test_validacion.py` | Pruebas unitarias de particiones y límites. |
+| `tests/conftest.py` | Reloj fijo y fixtures con base temporal por caso. |
+| `docs/justificacion-pruebas.md` | Decisiones de pruebas y lectura de cobertura de la sesión 22. |
 | `requirements.txt` | Versión de Flask usada. Pip resuelve sus dependencias. |
 | `tests/test_api.py` | Pruebas de integración. |
 | `ejemplos/*.json` | Cuerpos para las peticiones curl. |
@@ -328,7 +353,7 @@ Después cambia `5000` por `5001` en la dirección del navegador y en todos los 
 
 ## 10. Contrato y decisiones de diseño
 
-[openapi.yaml](openapi.yaml) documenta rutas, métodos, cuerpos y respuestas en OpenAPI 3.0.3. Es documentación complementaria: la validación ejecutable está en `app.py`; Flask no carga automáticamente el YAML. No se añade una interfaz Swagger ni una dependencia para ejecutar el contrato.
+[openapi.yaml](openapi.yaml) documenta rutas, métodos, cuerpos y respuestas en OpenAPI 3.0.3. Es documentación complementaria: la regla se implementa en `validacion.py` y se aplica desde `app.py`; Flask no carga automáticamente el YAML. No se añade una interfaz Swagger ni una dependencia para ejecutar el contrato.
 
 La comunicación de este ejercicio es sincrónica: el cliente envía la petición y recibe el resultado de la operación. Se conserva `/avistamientos` tal como lo pide el enunciado; versionado por URL y paginación quedan como posibles ampliaciones. La API actual devuelve todos los registros. Colas y API Gateway no son necesarios para una aplicación local de este alcance.
 
@@ -336,7 +361,7 @@ La comunicación de este ejercicio es sincrónica: el cliente envía la petició
 
 - **Herramienta utilizada:** ChatGPT, modo Codex, de OpenAI.
 - **Modelo exacto:** GPT 6 Astra Alta 
-- **Alcance del apoyo:** generación de la base de código de la API, pruebas, ejemplos, contrato OpenAPI y documentación; ajustes a partir de los dos documentos de clase.
+- **Alcance del apoyo:** generación de la base de código de la API, pruebas, ejemplos, contrato OpenAPI y documentación; ajustes a partir de los documentos de clase. Para la sesión 22 se utilizó también ChatGPT/Codex (GPT-6) como apoyo para refactorizar la validación, preparar las pruebas y redactar su justificación.
 
 
 Material del curso consultado: Jonathan Briceño, *Comunicación entre sistemas: Integración y APIs*, `SESION_16_v2.pdf`; y *Trabajo en clase: construir una API REST*, sesión 17, `Enunciado_Sesion17_Trabajo_API_REST.pdf`. Los PDF no se redistribuyen en este repositorio.
@@ -350,4 +375,5 @@ Documentación oficial consultada para utilizar las bibliotecas y herramientas (
 - curl: [manual oficial](https://curl.se/docs/manpage.html).
 - VS Code: [entornos Python](https://code.visualstudio.com/docs/python/environments).
 - GitHub: [publicar código local](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github) y [autenticación con Git Credential Manager](https://docs.github.com/en/get-started/git-basics/caching-your-github-credentials-in-git).
+
 

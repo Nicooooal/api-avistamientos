@@ -1,202 +1,225 @@
-"""Pruebas de integración: peticiones HTTP simuladas y SQLite real temporal."""
-
-import sqlite3
-import tempfile
-import unittest
-from pathlib import Path
-from contextlib import closing
-
+"""Integración del contrato HTTP, validación y SQLite real."""
+import pytest
 from app import create_app
 
 
-class AvistamientosTestCase(unittest.TestCase):
-    def setUp(self):
-        self.temporal = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temporal.cleanup)
-        self.database = str(Path(self.temporal.name) / "pruebas.db")
-        self.app = create_app({"TESTING": True, "DATABASE": self.database})
-        self.client = self.app.test_client()
-        self.datos = {
-            "especie": "colibrí",
-            "lugar": "Jardín Botánico de Bogotá",
-            "fecha": "2026-09-29",
-            "observador": "Nicolás",
-        }
-
-    def crear(self, **cambios):
-        return self.client.post("/avistamientos", json={**self.datos, **cambios})
-
-    def assert_json(self, respuesta, codigo):
-        self.assertEqual(respuesta.status_code, codigo)
-        self.assertEqual(respuesta.mimetype, "application/json")
-
-    def test_listar_base_vacia(self):
-        respuesta = self.client.get("/avistamientos")
-        self.assert_json(respuesta, 200)
-        self.assertEqual(respuesta.get_json(), [])
-
-    def test_crear_devuelve_id_y_location(self):
-        respuesta = self.crear()
-        self.assert_json(respuesta, 201)
-        self.assertEqual(respuesta.get_json(), {"id": 1, **self.datos})
-        self.assertEqual(respuesta.headers["Location"], "/avistamientos/1")
-        self.assertEqual(self.client.get("/avistamientos").get_json(), [respuesta.get_json()])
-
-    def test_ids_generados_son_distintos(self):
-        a, b = self.crear().get_json(), self.crear().get_json()
-        self.assertNotEqual(a["id"], b["id"])
-
-    def test_obtener_existente(self):
-        creado = self.crear().get_json()
-        respuesta = self.client.get(f"/avistamientos/{creado['id']}")
-        self.assert_json(respuesta, 200)
-        self.assertEqual(respuesta.get_json(), creado)
-
-    def test_obtener_inexistente(self):
-        self.assert_json(self.client.get("/avistamientos/999"), 404)
-
-    def test_post_rechaza_cada_campo_faltante(self):
-        for campo in self.datos:
-            with self.subTest(campo=campo):
-                datos = {k: v for k, v in self.datos.items() if k != campo}
-                self.assert_json(self.client.post("/avistamientos", json=datos), 400)
-        self.assertEqual(self.client.get("/avistamientos").get_json(), [])
-
-    def test_campos_deben_ser_texto_no_vacio(self):
-        for campo in self.datos:
-            for valor in ("", "   ", None, 25, True, [], {}):
-                with self.subTest(campo=campo, valor=valor):
-                    self.assert_json(self.crear(**{campo: valor}), 400)
-
-    def test_fechas_invalidas(self):
-        for fecha in ("29/09/2026", "2026-9-29", "2026-02-30", "2025-02-29", "0000-01-01"):
-            with self.subTest(fecha=fecha):
-                self.assert_json(self.crear(fecha=fecha), 400)
-
-    def test_fecha_bisiesta_valida(self):
-        self.assert_json(self.crear(fecha="2024-02-29"), 201)
-
-    def test_rechaza_id_y_campos_desconocidos(self):
-        self.assert_json(self.crear(id=123), 400)
-        self.assert_json(self.crear(color="verde"), 400)
-
-    def test_json_malformado(self):
-        respuesta = self.client.post("/avistamientos", data='{"especie":', content_type="application/json")
-        self.assert_json(respuesta, 400)
-
-    def test_cuerpo_no_es_objeto_json(self):
-        for cuerpo in ("[]", "null", '"texto"', "42"):
-            with self.subTest(cuerpo=cuerpo):
-                respuesta = self.client.post("/avistamientos", data=cuerpo, content_type="application/json")
-                self.assert_json(respuesta, 400)
-
-    def test_sin_content_type_json(self):
-        respuesta = self.client.post("/avistamientos", data="especie=colibri")
-        self.assert_json(respuesta, 400)
-
-    def test_sin_cuerpo(self):
-        self.assert_json(self.client.post("/avistamientos", content_type="application/json"), 400)
-
-    def test_actualizar_conserva_id(self):
-        creado = self.crear().get_json()
-        nuevos = {**self.datos, "lugar": "Humedal Santa María del Lago"}
-        respuesta = self.client.put(f"/avistamientos/{creado['id']}", json=nuevos)
-        self.assert_json(respuesta, 200)
-        esperado = {"id": creado["id"], **nuevos}
-        self.assertEqual(respuesta.get_json(), esperado)
-        self.assertEqual(self.client.get(f"/avistamientos/{creado['id']}").get_json(), esperado)
-
-    def test_actualizar_inexistente(self):
-        self.assert_json(self.client.put("/avistamientos/999", json=self.datos), 404)
-
-    def test_put_repetido_es_idempotente(self):
-        creado = self.crear().get_json()
-        url = f"/avistamientos/{creado['id']}"
-        nuevos = {**self.datos, "lugar": "Humedal"}
-        primera = self.client.put(url, json=nuevos)
-        segunda = self.client.put(url, json=nuevos)
-        self.assert_json(primera, 200)
-        self.assert_json(segunda, 200)
-        self.assertEqual(primera.get_json(), segunda.get_json())
-        self.assertEqual(self.client.get("/avistamientos").get_json(), [segunda.get_json()])
-
-    def test_put_incompleto_no_modifica_datos(self):
-        creado = self.crear().get_json()
-        url = f"/avistamientos/{creado['id']}"
-        self.assert_json(self.client.put(url, json={"lugar": "Otro"}), 400)
-        self.assertEqual(self.client.get(url).get_json(), creado)
-
-    def test_eliminar_y_consultar_despues(self):
-        creado = self.crear().get_json()
-        url = f"/avistamientos/{creado['id']}"
-        respuesta = self.client.delete(url)
-        self.assert_json(respuesta, 200)
-        self.assertEqual(respuesta.get_json()["id"], creado["id"])
-        self.assert_json(self.client.get(url), 404)
-        self.assert_json(self.client.delete(url), 404)
-
-    def test_eliminar_inexistente(self):
-        self.assert_json(self.client.delete("/avistamientos/999"), 404)
-
-    def test_resumen_vacio(self):
-        respuesta = self.client.get("/avistamientos/resumen")
-        self.assert_json(respuesta, 200)
-        self.assertEqual(respuesta.get_json(), [])
-
-    def test_resumen_agrupa_por_especie(self):
-        self.crear()
-        self.crear()
-        self.crear(especie="copetón")
-        respuesta = self.client.get("/avistamientos/resumen")
-        self.assert_json(respuesta, 200)
-        self.assertEqual(respuesta.get_json(), [
-            {"especie": "colibrí", "cantidad": 2},
-            {"especie": "copetón", "cantidad": 1},
-        ])
-
-    def test_resumen_refleja_actualizacion_y_borrado(self):
-        a, b = self.crear().get_json(), self.crear().get_json()
-        self.client.put(f"/avistamientos/{a['id']}", json={**self.datos, "especie": "copetón"})
-        self.client.delete(f"/avistamientos/{b['id']}")
-        self.assertEqual(self.client.get("/avistamientos/resumen").get_json(), [{"especie": "copetón", "cantidad": 1}])
-
-    def test_persistencia_al_recrear_aplicacion(self):
-        creado = self.crear().get_json()
-        otra_app = create_app({"TESTING": True, "DATABASE": self.database})
-        respuesta = otra_app.test_client().get(f"/avistamientos/{creado['id']}")
-        self.assert_json(respuesta, 200)
-        self.assertEqual(respuesta.get_json(), creado)
-        with closing(sqlite3.connect(self.database)) as db:
-            self.assertEqual(db.execute("SELECT COUNT(*) FROM avistamientos").fetchone()[0], 1)
-
-    def test_entradas_sql_se_guardan_como_texto(self):
-        texto = "ave'); DROP TABLE avistamientos; --"
-        self.assert_json(self.crear(especie=texto), 201)
-        self.assertEqual(self.client.get("/avistamientos").get_json()[0]["especie"], texto)
-        self.assert_json(self.crear(), 201)
-
-    def test_recorta_espacios_exteriores(self):
-        respuesta = self.crear(especie="  colibrí  ")
-        self.assertEqual(respuesta.get_json()["especie"], "colibrí")
-
-    def test_ruta_desconocida_responde_json(self):
-        self.assert_json(self.client.get("/no-existe"), 404)
-
-    def test_metodo_no_permitido_responde_json(self):
-        respuesta = self.client.patch("/avistamientos/1", json=self.datos)
-        self.assert_json(respuesta, 405)
-        self.assertIn("PUT", respuesta.headers["Allow"])
-
-    def test_ids_fuera_de_rango_no_producen_500(self):
-        for identificador in ("0", "-1", "abc", "999999999999999999999999"):
-            for metodo in ("get", "put", "delete"):
-                with self.subTest(identificador=identificador, metodo=metodo):
-                    respuesta = getattr(self.client, metodo)(f"/avistamientos/{identificador}")
-                    self.assert_json(respuesta, 404)
-
-    def test_cuerpo_excesivo(self):
-        self.assert_json(self.crear(lugar="x" * 70000), 413)
+def comprobar(respuesta, codigo, cuerpo):
+    assert respuesta.status_code == codigo
+    assert respuesta.mimetype == "application/json"
+    assert respuesta.get_json() == cuerpo
 
 
-if __name__ == "__main__":
-    unittest.main()
+def crear(client, datos):
+    respuesta = client.post("/avistamientos", json=datos)
+    assert respuesta.status_code == 201
+    return respuesta.get_json()
+
+
+def test_get_coleccion_vacia_responde_200_y_array_vacio(client):
+    # Arrange: base exclusiva y vacía proporcionada por la fixture.
+    ruta = "/avistamientos"
+    # Act
+    respuesta = client.get(ruta)
+    # Assert
+    comprobar(respuesta, 200, [])
+
+
+def test_get_coleccion_devuelve_registros_ordenados_sin_modificarlos(client, datos):
+    # Arrange
+    a = crear(client, datos)
+    b = crear(client, {**datos, "especie": "copetón"})
+    # Act
+    respuesta = client.get("/avistamientos")
+    # Assert
+    comprobar(respuesta, 200, [a, b])
+    comprobar(client.get("/avistamientos"), 200, [a, b])
+
+
+def test_post_valido_devuelve_201_location_y_registro_consultable(client, datos):
+    # Arrange
+    entrada = datos.copy()
+    # Act
+    respuesta = client.post("/avistamientos", json=entrada)
+    # Assert
+    creado = respuesta.get_json()
+    assert type(creado["id"]) is int and creado["id"] > 0
+    comprobar(respuesta, 201, {"id": creado["id"], **entrada})
+    assert respuesta.headers["Location"] == f"/avistamientos/{creado['id']}"
+    comprobar(client.get(respuesta.headers["Location"]), 200, creado)
+    comprobar(client.get("/avistamientos"), 200, [creado])
+
+
+def test_get_id_existente_devuelve_todos_los_campos(client, datos):
+    # Arrange
+    creado = crear(client, datos)
+    # Act
+    respuesta = client.get(f"/avistamientos/{creado['id']}")
+    # Assert
+    comprobar(respuesta, 200, creado)
+
+
+@pytest.mark.parametrize("metodo", ["get", "put", "delete"])
+@pytest.mark.parametrize("identificador", ["999", "0", "999999999999999999999999"])
+def test_id_inexistente_o_fuera_de_rango_devuelve_404_sin_alterar_datos(client, datos, metodo, identificador):
+    # Arrange
+    ruta = f"/avistamientos/{identificador}"
+    # Act
+    respuesta = getattr(client, metodo)(ruta, json=datos)
+    # Assert
+    comprobar(respuesta, 404, {"error": "Avistamiento no encontrado."})
+    comprobar(client.get("/avistamientos"), 200, [])
+
+
+def test_put_reemplaza_campos_conserva_id_y_es_idempotente(client, datos):
+    # Arrange
+    creado = crear(client, datos)
+    ruta = f"/avistamientos/{creado['id']}"
+    nuevos = {"especie": "copetón", "lugar": "Humedal", "fecha": "2026-10-20", "observador": "Ana"}
+    esperado = {"id": creado["id"], **nuevos}
+    # Act
+    primera = client.put(ruta, json=nuevos)
+    segunda = client.put(ruta, json=nuevos)
+    # Assert
+    comprobar(primera, 200, esperado)
+    comprobar(segunda, 200, esperado)
+    comprobar(client.get(ruta), 200, esperado)
+    comprobar(client.get("/avistamientos"), 200, [esperado])
+
+
+@pytest.mark.parametrize("metodo", ["post", "put"])
+@pytest.mark.parametrize("campo,valor,mensaje", [
+    ("especie", "ab", "El campo 'especie' debe tener entre 3 y 50 caracteres."),
+    ("especie", "a" * 51, "El campo 'especie' debe tener entre 3 y 50 caracteres."),
+    ("fecha", "2026-10-22", "El campo 'fecha' no puede ser posterior a hoy."),
+    ("fecha", "21/10/2026", "El campo 'fecha' debe tener el formato AAAA-MM-DD."),
+    ("lugar", "  ", "El campo 'lugar' debe ser texto no vacío."),
+    ("observador", "", "El campo 'observador' debe ser texto no vacío."),
+])
+def test_post_y_put_invalidos_responden_400_con_campo_y_conservan_la_base(client, datos, metodo, campo, valor, mensaje):
+    # Arrange
+    existente = crear(client, datos)
+    ruta = "/avistamientos" if metodo == "post" else f"/avistamientos/{existente['id']}"
+    entrada = {**datos, campo: valor}
+    # Act
+    respuesta = getattr(client, metodo)(ruta, json=entrada)
+    # Assert
+    comprobar(respuesta, 400, {"error": mensaje})
+    comprobar(client.get("/avistamientos"), 200, [existente])
+
+
+@pytest.mark.parametrize("metodo", ["post", "put"])
+@pytest.mark.parametrize("especie", ["abc", "a" * 50])
+def test_post_y_put_aceptan_limites_de_especie_y_fecha_de_hoy(client, datos, metodo, especie):
+    # Arrange
+    anterior = crear(client, datos) if metodo == "put" else None
+    ruta = f"/avistamientos/{anterior['id']}" if anterior else "/avistamientos"
+    entrada = {**datos, "especie": especie}
+    # Act
+    respuesta = getattr(client, metodo)(ruta, json=entrada)
+    # Assert
+    identificador = anterior["id"] if anterior else respuesta.get_json()["id"]
+    esperado = {"id": identificador, **entrada}
+    comprobar(respuesta, 200 if anterior else 201, esperado)
+    comprobar(client.get(f"/avistamientos/{identificador}"), 200, esperado)
+
+
+@pytest.mark.parametrize("metodo", ["post", "put"])
+def test_post_y_put_incompletos_identifican_faltantes_sin_cambiar_datos(client, datos, metodo):
+    # Arrange
+    existente = crear(client, datos)
+    ruta = "/avistamientos" if metodo == "post" else f"/avistamientos/{existente['id']}"
+    # Act
+    respuesta = getattr(client, metodo)(ruta, json={"especie": "colibrí"})
+    # Assert
+    comprobar(respuesta, 400, {"error": "Faltan campos obligatorios: lugar, fecha, observador."})
+    comprobar(client.get("/avistamientos"), 200, [existente])
+
+
+def test_delete_elimina_solo_el_id_indicado_y_consulta_posterior_responde_404(client, datos):
+    # Arrange
+    a = crear(client, datos)
+    b = crear(client, {**datos, "especie": "copetón"})
+    ruta = f"/avistamientos/{a['id']}"
+    # Act
+    respuesta = client.delete(ruta)
+    # Assert
+    comprobar(respuesta, 200, {"mensaje": "Avistamiento eliminado.", "id": a["id"]})
+    comprobar(client.get(ruta), 404, {"error": "Avistamiento no encontrado."})
+    comprobar(client.delete(ruta), 404, {"error": "Avistamiento no encontrado."})
+    comprobar(client.get("/avistamientos"), 200, [b])
+
+
+def test_resumen_refleja_creacion_actualizacion_y_borrado(client, datos):
+    # Arrange
+    comprobar(client.get("/avistamientos/resumen"), 200, [])
+    a, b = crear(client, datos), crear(client, datos)
+    comprobar(client.get("/avistamientos/resumen"), 200, [{"especie": "colibrí", "cantidad": 2}])
+    # Act
+    client.put(f"/avistamientos/{a['id']}", json={**datos, "especie": "copetón"})
+    client.delete(f"/avistamientos/{b['id']}")
+    respuesta = client.get("/avistamientos/resumen")
+    # Assert
+    comprobar(respuesta, 200, [{"especie": "copetón", "cantidad": 1}])
+
+
+def test_registro_persiste_al_recrear_aplicacion_con_el_mismo_archivo(client, app, datos, reloj):
+    # Arrange
+    creado = crear(client, datos)
+    otra_app = create_app({"TESTING": True, "DATABASE": app.config["DATABASE"], "RELOJ": reloj})
+    # Act
+    respuesta = otra_app.test_client().get(f"/avistamientos/{creado['id']}")
+    # Assert
+    comprobar(respuesta, 200, creado)
+
+
+def test_texto_sql_se_guarda_como_dato_y_la_tabla_permanece(client, datos):
+    # Arrange
+    entrada = {**datos, "especie": "ave'); DROP TABLE avistamientos; --"}
+    # Act
+    respuesta = client.post("/avistamientos", json=entrada)
+    # Assert
+    creado = respuesta.get_json()
+    comprobar(respuesta, 201, {"id": creado["id"], **entrada})
+    otro = crear(client, datos)
+    assert otro["id"] != creado["id"]
+    comprobar(client.get("/avistamientos"), 200, [creado, otro])
+
+
+@pytest.mark.parametrize("cuerpo", ["[]", "null", '"texto"', "42"])
+def test_post_json_no_objeto_devuelve_400_y_no_inserta(client, cuerpo):
+    # Arrange
+    ruta = "/avistamientos"
+    # Act
+    respuesta = client.post(ruta, data=cuerpo, content_type="application/json")
+    # Assert
+    comprobar(respuesta, 400, {"error": "El cuerpo debe ser un objeto JSON."})
+    comprobar(client.get(ruta), 200, [])
+
+
+@pytest.mark.parametrize("cuerpo,tipo,codigo", [('{"especie":', "application/json", 400), ("", "application/json", 400), ("especie=ave", "text/plain", 400), ('{"lugar":"' + 'x' * 70000 + '"}', "application/json", 413)])
+def test_cuerpo_http_invalido_devuelve_error_json_sin_insertar(client, cuerpo, tipo, codigo):
+    # Arrange
+    ruta = "/avistamientos"
+    # Act
+    respuesta = client.post(ruta, data=cuerpo, content_type=tipo)
+    # Assert: el mensaje de sintaxis/tamaño lo genera Flask, se exige esquema y texto útil.
+    assert respuesta.status_code == codigo
+    assert respuesta.mimetype == "application/json"
+    error = respuesta.get_json()
+    assert set(error) == {"error"} and isinstance(error["error"], str) and error["error"].strip()
+    comprobar(client.get(ruta), 200, [])
+
+
+@pytest.mark.parametrize("ruta,metodo,codigo", [("/no-existe", "get", 404), ("/avistamientos/1", "patch", 405)])
+def test_errores_de_enrutamiento_conservan_codigo_json_y_cabeceras(client, ruta, metodo, codigo):
+    # Arrange
+    peticion = getattr(client, metodo)
+    # Act
+    respuesta = peticion(ruta)
+    # Assert
+    assert respuesta.status_code == codigo
+    assert respuesta.mimetype == "application/json"
+    cuerpo = respuesta.get_json()
+    assert set(cuerpo) == {"error"} and isinstance(cuerpo["error"], str) and cuerpo["error"]
+    if codigo == 405:
+        assert "PUT" in respuesta.headers["Allow"]
