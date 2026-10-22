@@ -2,7 +2,7 @@
 
 Proyecto individual de Ingeniería de Software 2: API de la sesión 17 y taller de pruebas de la sesión 22.
 
-La justificación del taller está en [docs/justificacion-pruebas.md](docs/justificacion-pruebas.md); la tabla de casos, en [docs/casos-validacion.md](docs/casos-validacion.md). La relación con las dos clases está en [docs/relacion-sesiones20-21.md](docs/relacion-sesiones20-21.md).
+La parte D del taller está en [docs/justificacion-pruebas.md](docs/justificacion-pruebas.md), con la tabla de casos, las decisiones y el reporte de cobertura.
 
 **Autor:** Nicolas Arias Lasprilla
 
@@ -301,7 +301,7 @@ En macOS/Linux:
 ./.venv/bin/python -m pytest --cov=app --cov=validacion --cov-branch --cov-report=term-missing --cov-report=html
 ```
 
-Al terminar, revisa el resumen de la terminal. Para abrir el detalle, entra a la carpeta `htmlcov` desde el explorador de archivos del sistema y abre `index.html` con el navegador. La columna Missing señala líneas y ramas no recorridas. El resumen de referencia está guardado en [docs/cobertura.txt](docs/cobertura.txt); su interpretación está en la sección 6 de la justificación. El reporte HTML se genera localmente y no se sube a Git.
+Al terminar, revisa el resumen de la terminal. Para abrir el detalle, entra a la carpeta `htmlcov` desde el explorador de archivos del sistema y abre `index.html` con el navegador. La columna Missing señala líneas y ramas no recorridas. El resumen de referencia y su interpretación están en la sección 6 de [la justificación](docs/justificacion-pruebas.md). El reporte HTML se genera localmente y no se sube a Git.
 
 Para comprobar la persistencia manualmente: crea un registro, anota su id, detén el servidor con Ctrl+C, vuelve a iniciarlo y consulta ese id antes de eliminarlo.
 
@@ -345,32 +345,21 @@ Después cambia `5000` por `5001` en la dirección del navegador y en todos los 
 | `requirements.txt` | Versión de Flask usada. Pip resuelve sus dependencias. |
 | `tests/test_api.py` | Pruebas de integración. |
 | `ejemplos/*.json` | Cuerpos para las peticiones curl. |
-| `openapi.yaml` | Contrato de los seis endpoints. |
-| `GUIA_PASO_A_PASO.md` | VS Code, ejecución, pruebas, GitHub y entrega. |
-| `EXPLICACION_Y_SESION_16.md` | Explicación del código y relación con las diapositivas. |
-| `.vscode/` | Configuración de depuración y descubrimiento de pruebas. |
 | `.gitignore` | Excluye entorno virtual, datos locales y archivos temporales. |
 
-## 10. Contrato y decisiones de diseño
-
-[openapi.yaml](openapi.yaml) documenta rutas, métodos, cuerpos y respuestas en OpenAPI 3.0.3. Es documentación complementaria: la regla se implementa en `validacion.py` y se aplica desde `app.py`; Flask no carga automáticamente el YAML. No se añade una interfaz Swagger ni una dependencia para ejecutar el contrato.
-
-La comunicación de este ejercicio es sincrónica: el cliente envía la petición y recibe el resultado de la operación. Se conserva `/avistamientos` tal como lo pide el enunciado; versionado por URL y paginación quedan como posibles ampliaciones. La API actual devuelve todos los registros. Colas y API Gateway no son necesarios para una aplicación local de este alcance.
-
-## 11. Uso de IA y fuentes
+## 10. Uso de IA y fuentes
 
 - **Herramienta utilizada:** ChatGPT, modo Codex, de OpenAI.
 - **Modelo exacto:** GPT 6 Astra Alta 
 - **Alcance del apoyo:** generación de la base de código de la API, pruebas, ejemplos, contrato OpenAPI y documentación; ajustes a partir de los documentos de clase. Para la sesión 22 se utilizó también ChatGPT/Codex (GPT-6) como apoyo para refactorizar la validación, preparar las pruebas y redactar su justificación.
 
 
-Material del curso consultado: Jonathan Briceño, *Comunicación entre sistemas: Integración y APIs*, `SESION_16_v2.pdf`; y *Trabajo en clase: construir una API REST*, sesión 17, `Enunciado_Sesion17_Trabajo_API_REST.pdf`. Los PDF no se redistribuyen en este repositorio.
+Material del curso consultado: Jonathan Briceño, *Comunicación entre sistemas: Integración y APIs*, `SESION_16_v2.pdf`; y *Trabajo en clase: construir una API REST*, sesión 17, `Enunciado_Sesion17_Trabajo_API_REST.pdf`. Para el taller de pruebas se consultaron el enunciado y las sesiones 20 y 21 de Jonathan Briceño. Los PDF no se redistribuyen en este repositorio.
 
 Documentación oficial consultada para utilizar las bibliotecas y herramientas (29 de septiembre de 2026):
 
 - Flask: [inicio rápido](https://flask.palletsprojects.com/en/stable/quickstart/) y [pruebas](https://flask.palletsprojects.com/en/stable/testing/).
 - Python: [sqlite3](https://docs.python.org/3/library/sqlite3.html) y [entornos virtuales](https://docs.python.org/3/library/venv.html).
-- OpenAPI Initiative: [OpenAPI 3.0.3](https://spec.openapis.org/oas/v3.0.3).
 - IETF: [RFC 9110, semántica HTTP](https://www.rfc-editor.org/rfc/rfc9110.html).
 - curl: [manual oficial](https://curl.se/docs/manpage.html).
 - VS Code: [entornos Python](https://code.visualstudio.com/docs/python/environments).
