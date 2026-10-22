@@ -3,17 +3,19 @@
 **Nicolás Arias Lasprilla · Ingeniería de Software 2**  
 Taller de pruebas unitarias y de integración sobre la API de avistamientos.
 
-## 1. Qué cambió en el código
+## 1. Qué cambié en el código y por qué
 
-La validación se extrajo de la petición de Flask a `validacion.py`. La función `validar_avistamiento(datos, reloj)` recibe datos y devuelve una copia normalizada o un `ErrorValidacion`. Comprueba especie de 3 a 50 caracteres, fecha real en formato AAAA-MM-DD no posterior a hoy, y lugar y observador no vacíos. La longitud se evalúa después de recortar espacios.
+Para este taller trabajé sobre la API de avistamientos que ya tenía en Python, Flask y SQLite, con el apoyo de IA que declaro en el README. El cambio principal fue separar la validación en `validacion.py`. Así puedo probar las reglas de los datos sin tener que iniciar Flask ni conectarme a la base de datos.
 
-El controlador lee el JSON y convierte el error de validación en HTTP 400, indicando el campo. Se conserva el 404 cuando PUT recibe un identificador inexistente. El reloj también se separó: `RelojSistema` obtiene la fecha local y las pruebas inyectan un reloj fijo.
+La función `validar_avistamiento(datos, reloj)` revisa que la especie tenga entre 3 y 50 caracteres, que la fecha exista y tenga el formato AAAA-MM-DD, y que no sea posterior a hoy. También comprueba que lugar y observador tengan texto. Antes de medir la longitud, recorta los espacios exteriores. Si encuentra un problema, devuelve un `ErrorValidacion`; si los datos son válidos, devuelve una copia con los textos recortados.
 
-Esto mejora la **controlabilidad** porque se pueden fijar entradas y fecha; mejora la **observabilidad** porque se comprueban resultados, errores y datos persistidos. La regla se prueba sin crear una aplicación Flask ni acceder a SQLite.
+Dejé en el controlador la lectura del JSON y la respuesta HTTP: un error de validación produce 400 e identifica el campo. Para un PUT con un id inexistente se mantiene el 404. También separé el reloj: la aplicación usa `RelojSistema` y las pruebas reciben uno con una fecha fija.
 
-## 2. Casos elegidos: particiones y valores límite
+Relaciono estos cambios con la **controlabilidad** y la **observabilidad** vistas en clase. Puedo controlar los datos y la fecha de cada prueba, y observar el resultado, el mensaje de error y lo que quedó guardado.
 
-La tabla inicial se preparó antes de implementar la suite; los vecinos 4 y 49 se añadieron al revisar las diapositivas. Se fija hoy en **2026-10-21**. En cada caso, los demás campos son válidos.
+## 2. Cómo elegí los casos de prueba
+
+La tabla inicial se preparó antes de implementar las pruebas. Después, al revisar las diapositivas, añadí las longitudes 4 y 49 para comprobar también los valores que están justo dentro del rango. En las pruebas tomé **2026-10-21** como hoy. Para comprobar una entrada inválida, mantuve válidos los demás campos.
 
 | Entrada | Tipo de caso | Resultado y motivo |
 | --- | --- | --- |
@@ -36,39 +38,42 @@ La tabla inicial se preparó antes de implementar la suite; los vecinos 4 y 49 s
 | Campo ausente o no textual | Contrato inválido | Identificar el campo faltante o con tipo incorrecto. |
 | Cuerpo no objeto o campos adicionales | Estructura inválida | Rechazar entradas fuera del contrato. |
 
-La **partición de equivalencia** divide especie en menos de 3, entre 3 y 50, y más de 50 caracteres. Los **valores límite** detectan errores como excluir 3 o 50 mediante una comparación incorrecta. En fecha se distinguen formato, existencia y relación con hoy: son causas distintas de rechazo.
 
-La suite tiene **33 funciones que generan 109 casos parametrizados**: 58 unitarios y 51 de integración. Por ejemplo, una función combina cuatro campos con siete valores inválidos y produce 28 casos. Vacío y espacios comprueban normalización; null, número, booleano, lista y objeto comprueban tipos JSON. Las combinaciones detectan diferencias accidentales entre campos, aunque varias recorren la misma rama. No se consideran 28 comportamientos independientes ni evidencia de mayor calidad.
+Para aplicar **particiones de equivalencia**, dividí la longitud de especie en tres grupos: menos de 3, de 3 a 50 y más de 50. Luego elegí **valores límite** para revisar dónde cambia la respuesta. Por ejemplo, probar 3 y 50 permite detectar si una comparación rechaza por error los extremos permitidos. En las fechas revisé por separado el formato, si el día existe y si está en el futuro.
 
-## 3. Por qué cada nivel
+El resultado de pytest muestra **109 casos: 58 unitarios y 51 de integración**. Estos salen de 33 funciones de prueba, varias parametrizadas. Por ejemplo, una función combina cuatro campos con siete valores inválidos y genera 28 casos. Con vacío y espacios reviso el contenido; con null, números, booleanos, listas y objetos reviso el tipo de dato. Varias combinaciones pasan por la misma rama, pero permiten comprobar que la regla se aplique a cada campo. Tener 109 casos no significa por sí solo que las pruebas sean mejores: lo que debo justificar es qué comprueba cada grupo.
 
-**Límites de especie:** son unitarias porque llaman directamente al validador. Comprueban aceptación o error exacto, aislando la regla de posibles fallos de HTTP y SQL.
+## 3. Por qué utilicé pruebas unitarias y de integración
 
-**Hoy y mañana:** también son unitarias. El stub fija la referencia temporal; dos casos adicionales cambian esa referencia para comprobar que el validador utiliza el reloj recibido.
+Para los **límites de especie** usé pruebas unitarias porque puedo llamar directamente al validador y comprobar si acepta el texto o devuelve el error esperado. Si fallan, puedo revisar esa regla sin mezclarla con HTTP o SQLite.
 
-**POST seguido de GET:** es integración porque recorre Flask, validación, escritura y lectura en SQLite. Comprueba 201, Content-Type, Location, id y todos los valores. Detectaría un campo guardado en otra columna, una escritura omitida o una respuesta HTTP incorrecta, defectos que la unitaria no puede observar. PUT inválido comprueba que los datos anteriores permanezcan; DELETE verifica que el recurso desaparezca y otro registro se conserve.
+También probé **hoy y mañana** de forma unitaria. Con el reloj fijo sé cuál debe ser el resultado cada vez. Incluí dos casos que cambian la fecha del reloj para comprobar que el validador realmente use la fecha que recibe.
 
-Se usa `test_client()`, autorizado por el taller: ejercita la interfaz HTTP dentro del proceso, sin abrir un puerto TCP. SQLite es el mismo motor de la aplicación, con un archivo temporal nuevo por caso. GET de colección vacía devuelve 200; no se inventa un error 400 donde no aplica.
+Para **crear con POST y consultar con GET** usé integración. Aquí necesito comprobar que Flask, la validación y SQLite funcionen juntos. Reviso el código 201, Content-Type, Location, el id y todos los campos. Esto permite encontrar problemas que la prueba del validador no detectaría, como devolver los datos sin guardarlos o guardar un campo en la columna equivocada. En PUT inválido verifico que los datos anteriores se conserven; en DELETE, que desaparezca el registro indicado y permanezca otro.
 
-Las pruebas tienen nombres de comportamiento y **AAA** visible: preparar, realizar una acción principal y verificar. Los GET posteriores observan el efecto de esa acción. **FIRST** orienta su diseño: unitarias rápidas sin I/O, datos independientes, reloj repetible y asserts autoverificables; se escribieron junto con esta ampliación, aunque la API base ya existía. No se afirma haber seguido TDD.
+Usé `test_client()` de Flask, permitido por el taller. Las peticiones se procesan dentro de la aplicación, sin abrir un puerto. Cada caso tiene un archivo SQLite temporal nuevo para evitar que una prueba dependa de los datos de otra. Para GET de una colección vacía espero 200 y una lista vacía, porque ese resultado es válido.
 
-## 4. Qué doble se utilizó y por qué
+Organicé las pruebas con **AAA**: primero preparo los datos, después ejecuto la acción principal y al final verifico el resultado. Cuando hago un GET después de POST o DELETE, lo uso para comprobar el efecto. También apliqué **FIRST**: las unitarias son rápidas y no acceden a archivos; los casos son independientes, el reloj permite repetirlos y los asserts indican si pasan. Las pruebas se incorporaron durante esta ampliación de la API. Como la API base ya existía, no presento este trabajo como un desarrollo completo con TDD.
 
-`RelojFijo` es un **stub**: devuelve una fecha preparada. El validador depende del protocolo `Reloj` y recibe su implementación desde fuera, aplicando inversión de dependencias. También se utiliza `unittest.mock.Mock(spec=Reloj)` como stub configurable: no se verifican llamadas, sino resultados.
+## 4. Qué doble utilicé y para qué
 
-Sin este doble, una fecha escrita como mañana dejaría de ser futura al ejecutar la prueba otro día. No se necesita un spy o mock de interacciones porque consultar el reloj no es el comportamiento de negocio que se quiere observar. No se reemplaza SQLite por un fake en integración: se perdería la comprobación del SQL real. La API no consume servicios externos.
+Utilicé `RelojFijo` como **stub**, porque entrega una fecha preparada para la prueba. El validador depende del protocolo `Reloj` y recibe la implementación desde fuera. Así aplico inversión de dependencias y puedo cambiar el reloj sin cambiar la validación. En otros casos usé `unittest.mock.Mock(spec=Reloj)` también como stub configurable: compruebo el resultado, no cuántas veces fue llamado.
 
-## 5. Qué pruebas se decidió no escribir
+Elegí este doble porque una fecha que hoy es futura dejará de serlo con el paso de los días. Si las pruebas dependieran del reloj del equipo, podrían cambiar de resultado sin haber modificado el código.
 
-1. **Todas las longitudes y fechas posibles.** Las pruebas exhaustivas no son viables. Los representantes y límites cubren las particiones relevantes sin enumerar el dominio.
-2. **El número exacto de consultas al reloj.** Se verifica la decisión según la fecha recibida; exigir una llamada concreta acoplaría la prueba a una implementación que puede cambiar sin alterar el resultado.
-3. **Carga y escrituras concurrentes.** La suite comprueba comportamiento funcional local. Las carreras entre peticiones requieren otro diseño de pruebas y quedan como limitación explícita.
+No necesité un spy ni comprobar interacciones con un mock, porque lo que me interesa es si la fecha se acepta o se rechaza. En integración mantuve SQLite real para revisar también las consultas SQL. La API no consume servicios externos, así que no tuve que simular respuestas de otra API.
 
-Se conservan regresiones de idempotencia, persistencia y entrada SQL porque protegen comportamientos existentes. No se añaden casos solo para aumentar la cantidad o alcanzar 100% de cobertura.
+## 5. Qué pruebas decidí no incluir
 
-## 6. Reporte y lectura de cobertura
+1. **Todas las longitudes y fechas posibles.** No es viable probar cada valor. Elegí representantes y límites de las particiones para revisar las reglas sin enumerar todas las entradas.
+2. **El número exacto de llamadas al reloj.** Me interesa que la validación use la fecha recibida. Exigir una cantidad de llamadas haría que la prueba dependiera de un detalle interno que podría cambiar sin afectar el resultado.
+3. **Carga y escrituras simultáneas.** En este taller me concentré en el comportamiento funcional. Comprobar peticiones concurrentes requiere otro diseño de pruebas y queda como una limitación del trabajo.
 
-La ejecución local en **Windows, Python 3.14.6, pytest 9.1.1 y pytest-cov 7.1.0** terminó con **109 passed**. Coincide con el resultado obtenido en Linux. El README contiene el comando reproducible y la forma de abrir el reporte HTML.
+Conservé pruebas de idempotencia, persistencia y entradas con texto SQL para revisar comportamientos de la API anterior. No añadí casos únicamente para aumentar el conteo o llegar al 100 %.
+
+## 6. Qué resultados obtuve y cómo interpreto la cobertura
+
+Ejecuté las pruebas desde la terminal de VS Code en **Windows, con Python 3.14.6, pytest 9.1.1 y pytest-cov 7.1.0**. El resultado fue **109 passed**. En el README dejé los comandos para repetir la ejecución y abrir el reporte HTML.
 
 ```text
 Name            Stmts   Miss Branch BrPart  Cover   Missing
@@ -79,10 +84,16 @@ validacion.py      36      1     16      0    98%   17
 TOTAL             138      7     38      3    94%
 ```
 
-El **criterio de cobertura** determina qué se cuenta: se ejecutaron 131/138 sentencias (**94,93%**) y 35/38 ramas (**92,11%**). El **94%** de la herramienta combina ambos criterios y redondea. Solo se miden `app.py` y `validacion.py`, no las pruebas ni las bibliotecas.
 
-La línea 89, respuesta genérica 500, queda pendiente. Sí aportaría una integración con un fallo de base controlado para comprobar JSON y ausencia de detalles internos. La línea 145 contempla una eliminación entre consulta y UPDATE; requiere estudiar concurrencia y queda fuera del alcance declarado. El arranque por consola (165–168), la configuración por defecto (53→55) y el reloj real (validacion.py:17) tampoco se recorren en esta suite: se usan fábrica, configuración temporal y stub.
+El reporte muestra **94 % de cobertura combinada**. Se ejecutaron 131 de 138 sentencias (**94,93 %**) y 35 de 38 ramas (**92,11 %**). Distingo estos **criterios de cobertura** porque recorrer una línea no siempre significa haber probado todas sus decisiones. La medición incluye `app.py` y `validacion.py`, sin contar las pruebas ni las bibliotecas.
 
-La cobertura identifica huecos, pero no demuestra que se hayan elegido buenas entradas. Un error `>` en lugar de `>=` puede sobrevivir con cobertura alta; por eso se comprueban los límites. Las decisiones pendientes se explican, sin presentar las pruebas verdes como garantía de ausencia de defectos.
+Al revisar lo que falta, encontré estos puntos:
+
+- **Línea 89 de app.py:** no probé la respuesta genérica 500. Sería útil provocar un fallo controlado de base de datos para verificar que la respuesta siga siendo JSON y no exponga detalles internos. La dejo identificada como una prueba pendiente.
+- **Línea 145 de app.py:** contempla que un registro desaparezca entre la consulta y el UPDATE. No cubrí esa situación de concurrencia.
+- **Líneas 165–168 y rama 53→55 de app.py:** corresponden al arranque por consola y a la configuración por defecto. Las pruebas crean la aplicación con una configuración temporal.
+- **Línea 17 de validacion.py:** obtiene la fecha del sistema. En las pruebas la sustituyo por el reloj fijo.
+
+El porcentaje me sirve para localizar partes que no ejecuté, pero no demuestra que la API esté libre de errores. Una comparación incorrecta, como usar `>` en lugar de `>=`, puede pasar desapercibida si no pruebo el valor exacto del límite. Por eso considero necesario revisar tanto la cobertura como los datos y resultados que comprueba cada caso.
 
 **Fuentes:** enunciado del taller; Jonathan Briceño, sesiones 20 (*Pruebas unitarias y dobles de prueba*) y 21 (*Pruebas II: Integración y cobertura*); [Flask: testing](https://flask.palletsprojects.com/en/stable/testing/) y [pytest-cov: configuración](https://pytest-cov.readthedocs.io/en/latest/config.html). El apoyo de IA está declarado en el README.
