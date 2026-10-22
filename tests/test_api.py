@@ -249,7 +249,7 @@ def test_post_json_no_objeto_devuelve_400_y_no_inserta(client, cuerpo):
     comprobar(client.get(ruta), 200, [])
 
 
-@pytest.mark.parametrize("cuerpo,tipo,codigo", [('{"especie":', "application/json", 400), ("", "application/json", 400), ("especie=ave", "text/plain", 400), ('{"lugar":"' + 'x' * 70000 + '"}', "application/json", 413)])
+@pytest.mark.parametrize("cuerpo,tipo,codigo", [('{"especie":', "application/json", 400), ("", "application/json", 400), ("especie=ave", "text/plain", 400), ('{"lugar":"' + 'x' * 70000 + '"}', "application/json", 413)], ids=["json_malformado", "cuerpo_vacio", "tipo_incorrecto", "cuerpo_excesivo"])
 def test_cuerpo_http_invalido_devuelve_error_json_sin_insertar(client, cuerpo, tipo, codigo):
     # Arrange
     ruta = "/avistamientos"
