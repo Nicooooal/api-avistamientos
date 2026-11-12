@@ -1,4 +1,4 @@
-"""Adaptador de entrada: convierte HTTP a llamadas al puerto del núcleo."""
+"""Adaptador primario: convierte HTTP a llamadas al puerto primario del núcleo."""
 from typing import Callable
 
 from flask import jsonify, request, url_for
