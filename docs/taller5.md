@@ -177,7 +177,7 @@ Los cambios se hicieron en pasos comprobados dentro del mismo repositorio, sin c
 4. [892cc4a](https://github.com/Nicooooal/api-avistamientos/commit/892cc4ad96d00f995dcd68030fe873d7ae341952): documentar la Parte 2 con el diagrama y las evidencias.
 5. [e473725](https://github.com/Nicooooal/api-avistamientos/commit/e4737253eac08b5ceebe1b77ec16d8de3c297d38): actualizar la descripción del README.
 6. [efc7491](https://github.com/Nicooooal/api-avistamientos/commit/efc749171185f07f5315eecd01c13de0fe8ab700): integrar la investigación de la Parte 1 en el informe.
-7. La revisión final se publicó en varios commits, no en uno solo: se ajustaron los docstrings y el nombre de una prueba a la terminología hexagonal, se actualizó el README, se corrigió la Parte 1 y se añadieron el comparador `scripts/comparar_api.py` y las evidencias reproducibles. Estos cambios figuran en el historial de GitHub, desde [c5bf9b9](https://github.com/Nicooooal/api-avistamientos/commit/c5bf9b9c79aa564098bb0fb51935c36198bddd83) hasta [9875cc8](https://github.com/Nicooooal/api-avistamientos/commit/9875cc87b4efd0eaa79bc907a645cecd939801dd).
+7. La revisión final se publicó en varios commits (de [c5bf9b9](https://github.com/Nicooooal/api-avistamientos/commit/c5bf9b9c79aa564098bb0fb51935c36198bddd83) a [9875cc8](https://github.com/Nicooooal/api-avistamientos/commit/9875cc87b4efd0eaa79bc907a645cecd939801dd)). Se ajustó el vocabulario hexagonal, se actualizó el README, se corrigió el informe y se añadió `scripts/comparar_api.py` con evidencias reproducibles.
 
 ### Comprobaciones añadidas
 
