@@ -9,7 +9,7 @@ class Reloj(Protocol):
 
 
 class RepositorioAvistamientos(Protocol):
-    """Puerto de salida: devuelve datos simples, nunca filas de una base."""
+    """Puerto secundario: la aplicación lo dirige. Devuelve datos simples, nunca filas de una base."""
 
     def listar(self) -> list[dict]: ...
     def obtener(self, identificador: int) -> dict | None: ...
@@ -20,7 +20,7 @@ class RepositorioAvistamientos(Protocol):
 
 
 class GestionAvistamientos(Protocol):
-    """Puerto de entrada que pueden usar HTTP, una consola o las pruebas."""
+    """Puerto primario: dirige la aplicación. Lo pueden usar HTTP, una consola o las pruebas."""
 
     def listar(self) -> list[dict]: ...
     def obtener(self, identificador: int) -> dict: ...
