@@ -342,6 +342,7 @@ Después cambia `5000` por `5001` en la dirección del navegador y en todos los 
 | `avistamientos/nucleo/` | Puertos, operaciones y validación, sin Flask ni SQLite. |
 | `avistamientos/adaptadores/` | HTTP, persistencia SQLite y reloj del sistema. |
 | `tests/test_nucleo.py` | Tres comprobaciones de independencia y comportamiento del núcleo. |
+| `scripts/comparar_api.py` | Ejecuta 26 peticiones fijas contra una versión de la API; sirve para comparar dos revisiones con `diff`. |
 | `docs/taller5.md` | Informe completo: investigación y refactor hexagonal con evidencias antes y después. |
 | `validacion.py` | Compatibilidad con los imports de las pruebas anteriores. |
 | `requirements-dev.txt` | Herramientas de pruebas y cobertura. |
@@ -377,3 +378,5 @@ Documentación oficial consultada para utilizar las bibliotecas y herramientas (
 Para el Taller 5, Parte 2, se utilizó ChatGPT/Codex como apoyo para reorganizar el código, ejecutar verificaciones y preparar el informe. Las mediciones nuevas incluidas en el informe se obtuvieron en el entorno Linux de apoyo.
 
 La Parte 1 del Taller 5 se preparó con apoyo de ChatGPT/Codex, consultando los artículos originales de Cockburn (2005), Martin (2012) y Palermo (2008). Las citas y referencias están en el informe integrado.
+
+La revisión final del informe del Taller 5 contó con apoyo de Claude (Anthropic): contraste de la Parte 1 con los textos originales, ejecución de las pruebas y la cobertura antes y después del refactor en un entorno Linux, y el script `scripts/comparar_api.py`.
