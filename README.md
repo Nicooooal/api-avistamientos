@@ -1,6 +1,6 @@
 # API REST de avistamientos de aves
 
-Proyecto individual de Ingeniería de Software 2: API de avistamientos, pruebas y refactor con arquitectura hexagonal.
+Taller individual de Ingeniería de Software 2: API de avistamientos, pruebas y refactor con arquitectura hexagonal.
 
 La entrega actual, **Taller 5, Parte 2**, está en [docs/taller5-parte2.md](docs/taller5-parte2.md): organización, diagrama, commits y evidencia antes/después. La justificación de pruebas siguiente corresponde a la entrega anterior.
 
