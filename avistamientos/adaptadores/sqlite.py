@@ -1,4 +1,4 @@
-"""Adaptador de salida: el SQL y el límite de SQLite permanecen aquí."""
+"""Adaptador secundario: el SQL y el rango de ids de SQLite permanecen aquí."""
 import sqlite3
 from pathlib import Path
 
