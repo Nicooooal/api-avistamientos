@@ -1,4 +1,4 @@
-"""Adaptador de salida para consultar el reloj del equipo."""
+"""Adaptador secundario para consultar el reloj del equipo."""
 from datetime import date
 from avistamientos.nucleo.puertos import Reloj
 
