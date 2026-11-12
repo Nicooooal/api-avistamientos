@@ -1,6 +1,8 @@
 # API REST de avistamientos de aves
 
-Proyecto individual de Ingeniería de Software 2: API de la sesión 17 y taller de pruebas de la sesión 22.
+Proyecto individual de Ingeniería de Software 2: API de avistamientos, pruebas y refactor con arquitectura hexagonal.
+
+La entrega actual, **Taller 5, Parte 2**, está en [docs/taller5-parte2.md](docs/taller5-parte2.md): organización, diagrama, commits y evidencia antes/después. La justificación de pruebas siguiente corresponde a la entrega anterior.
 
 La parte D del taller está en [docs/justificacion-pruebas.md](docs/justificacion-pruebas.md), con la tabla de casos, las decisiones y el reporte de cobertura.
 
@@ -283,7 +285,7 @@ macOS/Linux:
 ./.venv/bin/python -m pytest -v
 ```
 
-Se esperan **109 casos aprobados**: 58 casos unitarios y 51 de integración, incluyendo las combinaciones parametrizadas. Cada función de prueba contiene comentarios Arrange, Act y Assert. La cantidad no es el criterio de calidad; la selección se explica en el documento de justificación.
+Se esperan **112 casos aprobados**: las 109 pruebas anteriores (58 unitarias de validación y 51 de integración) y tres comprobaciones nuevas del núcleo. Las pruebas anteriores se conservan sin modificaciones. La selección original se explica en la justificación de pruebas; las nuevas comprobaciones y el refactor, en el informe de la Parte 2.
 
 Para ejecutar un solo nivel, añade `tests/test_validacion.py` (unitarias) o `tests/test_api.py` (integración) después de `pytest`.
 
@@ -292,16 +294,16 @@ Las pruebas no necesitan un servidor encendido. Las de integración usan `test_c
 Genera cobertura de líneas y ramas en Windows:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest --cov=app --cov=validacion --cov-branch --cov-report=term-missing --cov-report=html
+.\.venv\Scripts\python.exe -m pytest --cov=app --cov=validacion --cov=avistamientos --cov-branch --cov-report=term-missing --cov-report=html
 ```
 
 En macOS/Linux:
 
 ```bash
-./.venv/bin/python -m pytest --cov=app --cov=validacion --cov-branch --cov-report=term-missing --cov-report=html
+./.venv/bin/python -m pytest --cov=app --cov=validacion --cov=avistamientos --cov-branch --cov-report=term-missing --cov-report=html
 ```
 
-Al terminar, revisa el resumen de la terminal. Para abrir el detalle, entra a la carpeta `htmlcov` desde el explorador de archivos del sistema y abre `index.html` con el navegador. La columna Missing señala líneas y ramas no recorridas. El resumen de referencia y su interpretación están en la sección 6 de [la justificación](docs/justificacion-pruebas.md). El reporte HTML se genera localmente y no se sube a Git.
+Al terminar, revisa el resumen de la terminal. Para abrir el detalle, entra a la carpeta `htmlcov` desde el explorador de archivos del sistema y abre `index.html` con el navegador. La columna Missing señala líneas y ramas no recorridas. La cobertura actual y su comparación con la versión anterior están en [el informe de la Parte 2](docs/taller5-parte2.md). Se incluye `--cov=avistamientos` para medir toda la implementación reorganizada. El reporte HTML se genera localmente y no se sube a Git.
 
 Para comprobar la persistencia manualmente: crea un registro, anota su id, detén el servidor con Ctrl+C, vuelve a iniciarlo y consulta ese id antes de eliminarlo.
 
@@ -336,8 +338,12 @@ Después cambia `5000` por `5001` en la dirección del navegador y en todos los 
 
 | Archivo | Función |
 | --- | --- |
-| `app.py` | Adaptación HTTP, conexión SQLite, creación de tabla y endpoints. |
-| `validacion.py` | Regla de negocio, error de validación e interfaz del reloj. |
+| `app.py` | Composición de dependencias, configuración y arranque. |
+| `avistamientos/nucleo/` | Puertos, operaciones y validación, sin Flask ni SQLite. |
+| `avistamientos/adaptadores/` | HTTP, persistencia SQLite y reloj del sistema. |
+| `tests/test_nucleo.py` | Tres comprobaciones de independencia y comportamiento del núcleo. |
+| `docs/taller5-parte2.md` | Informe del refactor hexagonal con evidencias antes y después. |
+| `validacion.py` | Compatibilidad con los imports de las pruebas anteriores. |
 | `requirements-dev.txt` | Herramientas de pruebas y cobertura. |
 | `tests/test_validacion.py` | Pruebas unitarias de particiones y límites. |
 | `tests/conftest.py` | Reloj fijo y fixtures con base temporal por caso. |
@@ -366,3 +372,6 @@ Documentación oficial consultada para utilizar las bibliotecas y herramientas (
 - GitHub: [publicar código local](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github) y [autenticación con Git Credential Manager](https://docs.github.com/en/get-started/git-basics/caching-your-github-credentials-in-git).
 
 
+
+
+Para el Taller 5, Parte 2, se utilizó ChatGPT/Codex como apoyo para reorganizar el código, ejecutar verificaciones y preparar el informe. Las mediciones nuevas incluidas en el informe se obtuvieron en el entorno Linux de apoyo.
