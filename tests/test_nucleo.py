@@ -1,4 +1,4 @@
-"""El puerto de entrada funciona con un fake, sin Flask ni SQLite."""
+"""El puerto primario funciona con un fake, sin Flask ni SQLite."""
 from collections import Counter
 from datetime import date
 import subprocess
@@ -44,7 +44,7 @@ class RepositorioMemoria:
         return [{"especie": e, "cantidad": conteo[e]} for e in sorted(conteo)]
 
 
-def test_crud_y_resumen_por_puerto_de_entrada_con_repositorio_en_memoria(datos, reloj):
+def test_crud_y_resumen_por_puerto_primario_con_repositorio_en_memoria(datos, reloj):
     # Arrange
     servicio = ServicioAvistamientos(RepositorioMemoria(), reloj)
     # Act: recorrido funcional sin adaptadores de producción.
