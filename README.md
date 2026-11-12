@@ -2,7 +2,7 @@
 
 Taller individual de Ingeniería de Software 2: API de avistamientos, pruebas y refactor con arquitectura hexagonal.
 
-La entrega actual, **Taller 5, Parte 2**, está en [docs/taller5-parte2.md](docs/taller5-parte2.md): organización, diagrama, commits y evidencia antes/después. La justificación de pruebas siguiente corresponde a la entrega anterior.
+La entrega actual, **Taller 5, Partes 1 y 2**, está en [docs/taller5.md](docs/taller5.md): investigación con citas, organización, diagrama, commits y evidencia antes/después. La justificación de pruebas siguiente corresponde a la entrega anterior.
 
 La parte D del taller está en [docs/justificacion-pruebas.md](docs/justificacion-pruebas.md), con la tabla de casos, las decisiones y el reporte de cobertura.
 
@@ -303,7 +303,7 @@ En macOS/Linux:
 ./.venv/bin/python -m pytest --cov=app --cov=validacion --cov=avistamientos --cov-branch --cov-report=term-missing --cov-report=html
 ```
 
-Al terminar, revisa el resumen de la terminal. Para abrir el detalle, entra a la carpeta `htmlcov` desde el explorador de archivos del sistema y abre `index.html` con el navegador. La columna Missing señala líneas y ramas no recorridas. La cobertura actual y su comparación con la versión anterior están en [el informe de la Parte 2](docs/taller5-parte2.md). Se incluye `--cov=avistamientos` para medir toda la implementación reorganizada. El reporte HTML se genera localmente y no se sube a Git.
+Al terminar, revisa el resumen de la terminal. Para abrir el detalle, entra a la carpeta `htmlcov` desde el explorador de archivos del sistema y abre `index.html` con el navegador. La columna Missing señala líneas y ramas no recorridas. La cobertura actual y su comparación con la versión anterior están en [el informe de la Parte 2](docs/taller5.md). Se incluye `--cov=avistamientos` para medir toda la implementación reorganizada. El reporte HTML se genera localmente y no se sube a Git.
 
 Para comprobar la persistencia manualmente: crea un registro, anota su id, detén el servidor con Ctrl+C, vuelve a iniciarlo y consulta ese id antes de eliminarlo.
 
@@ -342,7 +342,7 @@ Después cambia `5000` por `5001` en la dirección del navegador y en todos los 
 | `avistamientos/nucleo/` | Puertos, operaciones y validación, sin Flask ni SQLite. |
 | `avistamientos/adaptadores/` | HTTP, persistencia SQLite y reloj del sistema. |
 | `tests/test_nucleo.py` | Tres comprobaciones de independencia y comportamiento del núcleo. |
-| `docs/taller5-parte2.md` | Informe del refactor hexagonal con evidencias antes y después. |
+| `docs/taller5.md` | Informe completo: investigación y refactor hexagonal con evidencias antes y después. |
 | `validacion.py` | Compatibilidad con los imports de las pruebas anteriores. |
 | `requirements-dev.txt` | Herramientas de pruebas y cobertura. |
 | `tests/test_validacion.py` | Pruebas unitarias de particiones y límites. |
@@ -375,3 +375,5 @@ Documentación oficial consultada para utilizar las bibliotecas y herramientas (
 
 
 Para el Taller 5, Parte 2, se utilizó ChatGPT/Codex como apoyo para reorganizar el código, ejecutar verificaciones y preparar el informe. Las mediciones nuevas incluidas en el informe se obtuvieron en el entorno Linux de apoyo.
+
+La Parte 1 del Taller 5 se preparó con apoyo de ChatGPT/Codex, consultando los artículos originales de Cockburn (2005), Martin (2012) y Palermo (2008). Las citas y referencias están en el informe integrado.

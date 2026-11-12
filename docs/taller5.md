@@ -1,11 +1,66 @@
-# Taller 5. Parte 2: aplicación de arquitectura hexagonal
+# Taller 5. Clean Architecture y arquitectura hexagonal
 
 **Nicolás Arias Lasprilla**  
 Ingeniería de Software 2 · Universidad El Bosque
 
 **Repositorio:** https://github.com/Nicooooal/api-avistamientos  
 **Rama:** main  
-**Alcance:** únicamente la Parte 2. Este documento no incluye las respuestas de investigación de la Parte 1.
+Documento integrado: investigación y aplicación sobre la API de avistamientos.
+
+## Parte 1. Investigación
+
+### 1. ¿Qué problema identifica Cockburn y cómo funcionan los puertos y adaptadores?
+
+Cockburn identifica que la lógica del negocio termina mezclada con la interfaz o atada a la base de datos. Esto dificulta automatizar pruebas, ejecutar procesos por lotes y trabajar cuando la base no está disponible (Cockburn, 2005).
+
+Un **puerto** define una conversación que la aplicación necesita ofrecer o utilizar. Un **adaptador** traduce esa conversación a una tecnología concreta. La simetría consiste en que tanto el usuario como la base son externos: en ambos lados hay que separar la interacción técnica de las reglas internas (Cockburn, 2005).
+
+En mi API, gestionar avistamientos es el puerto de entrada y HTTP es su adaptador. Guardar y consultar son operaciones del puerto de repositorio; SQLite es una implementación. Aquí “puerto” no significa el número 5000 del servidor, sino el contrato que usa el código.
+
+### 2. ¿Qué contiene cada círculo de Clean Architecture y qué exige la regla de dependencia?
+
+De adentro hacia afuera, Martin (2012) distingue:
+
+| Círculo | Contenido |
+| --- | --- |
+| Entidades | Reglas generales del negocio, expresadas mediante objetos o datos y funciones. |
+| Casos de uso | Operaciones específicas de la aplicación que coordinan esas reglas. |
+| Adaptadores de interfaz | Conversión entre los datos internos y los formatos de presentación o persistencia. |
+| Frameworks y controladores técnicos | Herramientas externas, como el framework web y la base de datos. |
+
+La **regla de dependencia** exige que el código dependa hacia adentro. Prohíbe que una parte interna conozca nombres o formatos definidos afuera. No obliga a tener exactamente cuatro círculos (Martin, 2012).
+
+### 3. ¿Cómo guarda datos un caso de uso sin depender de la base?
+
+La solución es definir una interfaz dentro y hacer que la implementación externa la cumpla. Al ejecutar, se proporciona esa implementación al caso de uso. El flujo de ejecución puede salir, aunque la dependencia del código apunte hacia dentro: es inversión de dependencias (Martin, 2012).
+
+En mi implementación, `ServicioAvistamientos` recibe un `RepositorioAvistamientos`. Al crear, valida y llama a `repositorio.crear(datos)`. `app.py` le entrega un `RepositorioSQLite`, que ejecuta el INSERT. El servicio no importa SQLite. En una prueba recibe un repositorio en memoria y realiza la misma operación. Este ejemplo aplica el mecanismo descrito por Martin; la organización elegida para mi proyecto sigue siendo hexagonal.
+
+<!-- pagebreak -->
+
+### 4. ¿Qué comparten las tres arquitecturas y en qué cambian?
+
+Las tres buscan separar las reglas de las tecnologías externas. La base de datos queda como un detalle reemplazable y las interfaces permiten conectar implementaciones sin poner ese conocimiento en el centro (Cockburn, 2005; Palermo, 2008; Martin, 2012).
+
+| Arquitectura | Enfoque que la distingue |
+| --- | --- |
+| Hexagonal | Organiza la frontera mediante puertos y adaptadores; no exige seis componentes (Cockburn, 2005). |
+| Cebolla | Sitúa el modelo de dominio en el centro, rodeado de contratos y comportamiento. El número de capas puede variar; la infraestructura queda afuera (Palermo, 2008). |
+| Clean Architecture | Distingue entidades, casos de uso, adaptadores y herramientas externas (Martin, 2012). |
+
+No cambia solo el nombre. Palermo da especial importancia al modelo de dominio y a los objetos, mientras Cockburn destaca las conversaciones entre la aplicación y el exterior (Palermo, 2008; Cockburn, 2005). Mi interpretación es que comparten un objetivo, pero ofrecen formas distintas de decidir y explicar los límites del código.
+
+### 5. ¿Se justifica aplicar Clean Architecture a una API pequeña?
+
+Mi posición es que **sí vale la pena separar las reglas de las tecnologías, pero no añadiría todas las capas de Clean Architecture solo para completar un esquema**. Palermo orienta su propuesta a aplicaciones de negocio duraderas o complejas y advierte que no es adecuada para sitios pequeños; tomo esa advertencia como motivo para evaluar el costo, no como una prohibición de separar responsabilidades (Palermo, 2008).
+
+En esta API veo un beneficio concreto: ahora puedo probar la creación de avistamientos con un repositorio en memoria, sin Flask ni SQLite. También puedo identificar qué archivo debo cambiar si el problema está en HTTP, en una regla o en el SQL. El costo es que una operación corta queda distribuida entre más archivos y debo mantener contratos y configurar sus implementaciones.
+
+Por eso elegí una versión sencilla de arquitectura hexagonal para la Parte 2. Me permite practicar esa separación con el mismo código que ya tenía. Si la API se quedara como un ejercicio pequeño y sin cambios, no asumiría que agregar más capas mejoraría el proyecto. Justifico la separación por lo que permite comprobar y modificar, no por la cantidad de carpetas.
+
+<!-- pagebreak -->
+
+## Parte 2. Aplicación
 
 ## 1. Arquitectura elegida y cambios
 
@@ -24,7 +79,7 @@ Apliqué el cambio a **todos los endpoints**: listar, consultar por id, crear, a
 | `avistamientos/adaptadores/reloj.py` | Implementar el reloj del sistema. |
 | `validacion.py` | Reexportar los nombres anteriores para mantener compatibles las pruebas existentes; no duplica reglas. |
 | `tests/` | Conservar las 109 pruebas anteriores y añadir tres comprobaciones del núcleo. |
-| `docs/` | Mantener la justificación del taller anterior y este documento de la Parte 2. |
+| `docs/` | Mantener la justificación del taller anterior y este informe del Taller 5. |
 
 Dentro de `avistamientos/`, las carpetas `nucleo/` y `adaptadores/` son paquetes de Python y tienen su `__init__.py`. También se mantienen los archivos de dependencias, `pytest.ini`, `.gitignore` y los ejemplos JSON del README.
 
@@ -246,8 +301,12 @@ Si la base está vacía verás `[]`; si ya tenías registros, verás esos datos.
 
 En macOS o Linux crea el entorno con `python3 -m venv .venv`, sustituye `.\.venv\Scripts\python.exe` por `./.venv/bin/python` en los comandos y usa `curl` en lugar de `curl.exe`.
 
-### Referencia de la arquitectura aplicada
+## Referencias
 
-Cockburn, A. (2005). *Hexagonal architecture*. https://alistair.cockburn.us/hexagonal-architecture/
+Cockburn, A. (2005). *Hexagonal architecture*. Secciones Intent, Motivation y Nature of the Solution. https://alistair.cockburn.us/hexagonal-architecture/
 
-La organización y las decisiones descritas corresponden a esta implementación. Esta referencia sustenta el enfoque de puertos y adaptadores; las respuestas de investigación de la Parte 1 quedan fuera del alcance solicitado.
+Martin, R. C. (2012, 13 de agosto). *The Clean Architecture*. The Clean Code Blog. https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
+
+Palermo, J. (2008, 29 de julio). *The Onion Architecture: part 1*. Programming with Palermo. https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/
+
+Las respuestas de investigación están redactadas como síntesis de estas fuentes. Los ejemplos sobre avistamientos, los resultados de pruebas y las decisiones de implementación corresponden al proyecto del repositorio. El apoyo de ChatGPT/Codex está declarado en el README.
