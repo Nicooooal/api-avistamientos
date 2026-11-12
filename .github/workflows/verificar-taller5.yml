@@ -1,0 +1,37 @@
+name: Verificar Taller 5
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app.py"
+      - "avistamientos/**"
+      - "validacion.py"
+      - "tests/**"
+      - "scripts/comparar_api.py"
+      - ".github/workflows/verificar-taller5.yml"
+  workflow_dispatch:
+
+jobs:
+  pruebas-y-comparacion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener repositorio e historial
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias declaradas
+        run: python -m pip install -r requirements-dev.txt
+      - name: Ejecutar todas las pruebas y medir cobertura
+        run: python -m pytest --cov=app --cov=validacion --cov=avistamientos --cov-branch --cov-report=term-missing
+      - name: Comparar 26 peticiones HTTP antes y después
+        run: |
+          git worktree add --detach ../avistamientos-antes e1c4a37802ca52fee0be60714ae0886645cc0293
+          python scripts/comparar_api.py ../avistamientos-antes > antes.txt
+          python scripts/comparar_api.py . > despues.txt
+          diff -u antes.txt despues.txt
+          echo "Las 26 peticiones coincidieron."
